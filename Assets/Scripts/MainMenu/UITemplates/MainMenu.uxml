@@ -1,0 +1,3 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <ui:Button text="Continue" display-tooltip-when-elided="true" style="height: 50px; width: 200px; -unity-font: url(&apos;Library/unity default resources&apos;); -unity-font-style: bold-and-italic; font-size: 24px; background-color: rgba(88, 88, 88, 0.62);" />
+</ui:UXML>
