@@ -15,7 +15,6 @@ namespace KaizerWaldCode.UI.MainMenu
         public Button SettingsButton;
         public Button QuitButton;
         
-        // Start is called before the first frame update
         void Awake()
         {
             VisualElement root = GetComponent<UIDocument>().rootVisualElement;
@@ -28,13 +27,10 @@ namespace KaizerWaldCode.UI.MainMenu
             NewGameButton.SetEnabled(true);
         }
 
-        public DirectoryInfo GetSaveDirectory()
-        {
-            return new DirectoryInfo("path");
-        }
-
         public bool IsContinueAvailable()
         {
+            //1 : Check in Application.PersistentData if Directory "Game Saves" Exist?
+            //2 : if Yes : Check if the number of folders inside "Game Saves" > 0; 
             return true;
         }
     }
