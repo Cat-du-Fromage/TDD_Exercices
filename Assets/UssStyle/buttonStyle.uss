@@ -23,7 +23,8 @@
     border-top-width: 5px;
     border-bottom-width: 5px;
     white-space: normal;
-    color: rgba(0, 0, 0, 255);
+    color: rgb(0, 0, 0);
+    background-color: rgba(147, 147, 147, 255);
 }
 
 .button-style:hover {
@@ -47,7 +48,7 @@
     -unity-font-style: bold;
     -unity-font: url('project://database/Assets/CustomFonts/Indira_K.ttf?fileID=12800000&guid=bcbb2aebb40265c49a0cac73d9035c1f&type=3#Indira_K');
     background-color: rgb(77, 77, 77);
-    color: rgba(255, 255, 255, 255);
+    color: rgb(255, 255, 255);
 }
 
 .button-style:active {
@@ -71,5 +72,5 @@
     -unity-font-style: bold;
     -unity-font: url('project://database/Assets/CustomFonts/Indira_K.ttf?fileID=12800000&guid=bcbb2aebb40265c49a0cac73d9035c1f&type=3#Indira_K');
     background-color: rgb(115, 115, 115);
-    color: rgba(224, 224, 224, 255);
+    color: rgb(224, 224, 224);
 }
