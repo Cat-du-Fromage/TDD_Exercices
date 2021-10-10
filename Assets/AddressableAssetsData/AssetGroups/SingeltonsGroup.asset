@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: SingeltonsGroup
+  m_EditorClassIdentifier: 
+  m_GroupName: SingeltonsGroup
+  m_Data:
+    m_SerializedData: []
+  m_GUID: 4c85051618c04534e9c3d3448b815913
+  m_SerializeEntries:
+  - m_GUID: 5104efe7244ca0a46b12387fde2224db
+    m_Address: GameSavesData
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: 985e95a6b31df324a8eb8ad5e1e6f6bb, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: c4207d396458f06408c45c7571b91d75, type: 2}
+    - {fileID: 11400000, guid: 2780f80033fac064684e3b8b27587387, type: 2}
