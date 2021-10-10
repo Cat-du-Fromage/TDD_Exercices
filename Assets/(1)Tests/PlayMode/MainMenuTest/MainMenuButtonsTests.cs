@@ -99,17 +99,19 @@ namespace PlayModeTest
             Assert.IsFalse(continueButtonEnable);
         }
         
+        
         [Test]
-        public void UIMainMenu_IsContinueAvailable_True()
+        public void UIMainMenu_ContinueButtonIsEnable_WithOneSave_True()
         {
             //Arrange
             Directory.Delete(MainSaveDirectory.Instance.MainSaveDirInfo.FullName, true);
             string sub1 = "sub1";
+            Button continueButton = mainMenuComponent.ContinueButton;
             //Act
             MainSaveDirectory.Instance.MainSaveDirInfo.CreateSubdirectory(sub1);
-            bool continueButtonEnable = mainMenuComponent.IsContinueAvailable();
+            mainMenuComponent.IsContinueAvailable();
             //Assert
-            Assert.IsTrue(continueButtonEnable);
+            Assert.IsTrue(continueButton.enabledSelf);
         }
         
         [Test]
@@ -117,10 +119,54 @@ namespace PlayModeTest
         {
             //Arrange
             Directory.Delete(MainSaveDirectory.Instance.MainSaveDirInfo.FullName, true);
-            //Act
             Button continueButton = mainMenuComponent.ContinueButton;
+            //Act
+            mainMenuComponent.IsContinueAvailable();
             //Assert
             Assert.IsFalse(continueButton.enabledSelf);
+        }
+        
+        //=============================================
+        //TEST BUTTONS LOAD GAME IS ENABLE ?
+        //=============================================
+        
+        [Test]
+        public void UIMainMenu_IsLoadAvailable_True()
+        {
+            //Arrange
+            Directory.Delete(MainSaveDirectory.Instance.MainSaveDirInfo.FullName, true);
+            string sub1 = "sub1";
+            //Act
+            MainSaveDirectory.Instance.MainSaveDirInfo.CreateSubdirectory(sub1);
+            bool loadButtonEnable = mainMenuComponent.IsLoadAvailable();
+            //Assert
+            Assert.IsTrue(loadButtonEnable);
+        }
+        
+        [Test]
+        public void UIMainMenu_LoadButtonIsEnable_WithOneSave_True()
+        {
+            //Arrange
+            Directory.Delete(MainSaveDirectory.Instance.MainSaveDirInfo.FullName, true);
+            string sub1 = "sub1";
+            Button loadButton = mainMenuComponent.LoadGameButton;
+            //Act
+            MainSaveDirectory.Instance.MainSaveDirInfo.CreateSubdirectory(sub1);
+            mainMenuComponent.IsLoadAvailable();
+            //Assert
+            Assert.IsTrue(loadButton.enabledSelf);
+        }
+        
+        [Test]
+        public void UIMainMenu_LoadButtonIsEnable_WhenNoSaves_False()
+        {
+            //Arrange
+            Directory.Delete(MainSaveDirectory.Instance.MainSaveDirInfo.FullName, true);
+            //Act
+            Button loadButton = mainMenuComponent.LoadGameButton;
+            mainMenuComponent.IsLoadAvailable();
+            //Assert
+            Assert.IsFalse(loadButton.enabledSelf);
         }
     }
 }

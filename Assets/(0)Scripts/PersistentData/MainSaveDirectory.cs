@@ -7,17 +7,17 @@ namespace KaizerWaldCode.PersistentData
 {
     public class MainSaveDirectory
     {
-        private const string GAME_SAVES_NAME = "Game Saves";
+        private const string MAIN_SAVES_NAME = "Game Saves";
         
         public readonly DirectoryInfo MainSaveDirInfo;
         
         private MainSaveDirectory()
         {
-            MainSaveDirInfo = Directory.CreateDirectory(Path.Combine(Application.persistentDataPath, GAME_SAVES_NAME));
+            MainSaveDirInfo = Directory.CreateDirectory(Path.Combine(Application.persistentDataPath, MAIN_SAVES_NAME));
         }
         
-        //Singelton Pattern
-        private static MainSaveDirectory instance = null;
+        //Singleton Pattern
+        private static MainSaveDirectory instance;
         public static MainSaveDirectory Instance
         {
             get

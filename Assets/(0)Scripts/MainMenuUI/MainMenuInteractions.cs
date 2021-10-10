@@ -16,7 +16,7 @@ namespace KaizerWaldCode.UI.MainMenu
         public Button SettingsButton;
         public Button QuitButton;
         
-        void Awake()
+        void OnEnable()
         {
             VisualElement root = GetComponent<UIDocument>().rootVisualElement;
             NewGameButton = root.Q<Button>("newGame-button");
@@ -27,9 +27,28 @@ namespace KaizerWaldCode.UI.MainMenu
 
             NewGameButton.SetEnabled(true);
             ContinueButton.SetEnabled(IsContinueAvailable());
+            LoadGameButton.SetEnabled(IsLoadAvailable());
         }
 
-        public bool IsContinueAvailable() => (MainSaveDirectory.Instance.GetNumSubfolders() > 0);
+        public bool IsContinueAvailable()
+        {
+            bool available = MainSaveDirectory.Instance.GetNumSubfolders() > 0;
+            if (ContinueButton.enabledSelf != available)
+            {
+                ContinueButton.SetEnabled(available);
+            }
+            return available;
+        }
+        
+        public bool IsLoadAvailable()
+        {
+            bool available = MainSaveDirectory.Instance.GetNumSubfolders() > 0;
+            if (LoadGameButton.enabledSelf != available)
+            {
+                LoadGameButton.SetEnabled(available);
+            }
+            return available;
+        }
     }
 }
 
