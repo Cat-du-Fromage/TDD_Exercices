@@ -4,6 +4,7 @@ using System.IO;
 using KaizerWaldCode.PersistentData;
 using KaizerWaldCode.UI.MainMenu;
 using NUnit.Framework;
+using UnityEditor.Build.Content;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -167,6 +168,20 @@ namespace PlayModeTest
             mainMenuComponent.IsLoadAvailable();
             //Assert
             Assert.IsFalse(loadButton.enabledSelf);
+        }
+        
+        [Test]
+        public void UIMainMenu_OnContinueClicked_False()
+        {
+            //Arrange
+            Directory.Delete(MainSaveDirectory.Instance.MainSaveDirInfo.FullName, true);
+            //Create Directory
+            string sub1 = "sub1";
+            MainSaveDirectory.Instance.MainSaveDirInfo.CreateSubdirectory(sub1);
+            //Act
+            //GameManager.LoadGameScene();
+            //Assert
+            Assert.IsFalse(true);
         }
     }
 }

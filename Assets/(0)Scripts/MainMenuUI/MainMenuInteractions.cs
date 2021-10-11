@@ -28,6 +28,10 @@ namespace KaizerWaldCode.UI.MainMenu
             NewGameButton.SetEnabled(true);
             ContinueButton.SetEnabled(IsContinueAvailable());
             LoadGameButton.SetEnabled(IsLoadAvailable());
+            
+            NewGameButton.clicked += OnClickNewGame;
+            ContinueButton.clicked += OnClickContinue;
+            LoadGameButton.clicked += OnClickLoadGame;
         }
 
         public bool IsContinueAvailable()
@@ -48,6 +52,21 @@ namespace KaizerWaldCode.UI.MainMenu
                 LoadGameButton.SetEnabled(available);
             }
             return available;
+        }
+        
+        private void OnClickNewGame()
+        {
+            Debug.Log("Open NewGame");
+        }
+
+        private void OnClickContinue()
+        {
+            
+        }
+        
+        private void OnClickLoadGame()
+        {
+            Debug.Log("Open LoadGame");
         }
     }
 }
