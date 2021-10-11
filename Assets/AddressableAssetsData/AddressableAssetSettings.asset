@@ -43,6 +43,7 @@ MonoBehaviour:
   m_GroupAssets:
   - {fileID: 11400000, guid: 69bbdc55daa49334a860f77fa9eaddf9, type: 2}
   - {fileID: 11400000, guid: 86a88914655f5ff439b444180cd0d580, type: 2}
+  - {fileID: 11400000, guid: 4087510e46310594da1ec7ae6eb54863, type: 2}
   m_BuildSettings:
     m_CompileScriptsInVirtualMode: 0
     m_CleanupStreamingAssetsAfterBuilds: 1
@@ -84,6 +85,7 @@ MonoBehaviour:
   m_LabelTable:
     m_LabelNames:
     - default
+    - SceneAsset
   m_SchemaTemplates: []
   m_GroupTemplateObjects:
   - {fileID: 11400000, guid: b8b63407820f54844ac4382f7b79b16c, type: 2}

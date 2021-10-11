@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using KaizerWaldCode.PersistentData;
+using KaizerWaldCode.Utils;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -59,9 +60,9 @@ namespace KaizerWaldCode.UI.MainMenu
             Debug.Log("Open NewGame");
         }
 
-        private void OnClickContinue()
+        public void OnClickContinue()
         {
-            
+            GameSceneManager.Instance.LoadGameScene();
         }
         
         private void OnClickLoadGame()

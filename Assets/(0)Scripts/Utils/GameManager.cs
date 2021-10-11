@@ -1,31 +1,36 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using PlasticGui.WorkspaceWindow.BranchExplorer;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public static class GameManager
+namespace KaizerWaldCode.Utils
 {
     /*
-    public static async Task<bool> LoadGameScene()
+    public static class GameManager
     {
-        Task.Run(() =>
+        
+        public static async Task<bool> LoadGameScene()
         {
+            Scene scene = SceneManager.GetSceneByName("Game");
+            AsyncOperation asyncOperation = SceneManager.LoadSceneAsync("Scenes/Game", LoadSceneMode.Additive);
+            asyncOperation.allowSceneActivation = false;
+            while (!asyncOperation.isDone)
+            {
+                //return Task.Yield();
+                await Task.Yield();
+            }
+            asyncOperation.allowSceneActivation = true;
+            
             Scene previousScene = SceneManager.GetSceneByName("MainMenu");
             if (previousScene.IsValid()) 
             {
-                yield return SceneManager.UnloadSceneAsync(previousScene);
+                SceneManager.UnloadSceneAsync(previousScene);
             }
- 
-            SceneManager.LoadScene("Scenes/Game", LoadSceneMode.Additive);
-            Scene scene = SceneManager.GetSceneByName("Game");
-            while (!scene.isLoaded)
-            {
-                await Task.Yield();
-            }
-        });
-        return true;
+            
+            return true;
+        }
+        
     }
     */
 }

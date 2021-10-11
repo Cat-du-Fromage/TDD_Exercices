@@ -1,8 +1,10 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using KaizerWaldCode;
 using KaizerWaldCode.PersistentData;
 using KaizerWaldCode.UI.MainMenu;
+using KaizerWaldCode.Utils;
 using NUnit.Framework;
 using UnityEditor.Build.Content;
 using UnityEditor.SceneManagement;
@@ -179,9 +181,11 @@ namespace PlayModeTest
             string sub1 = "sub1";
             MainSaveDirectory.Instance.MainSaveDirInfo.CreateSubdirectory(sub1);
             //Act
-            //GameManager.LoadGameScene();
+            //Button continueButton = mainMenuComponent.ContinueButton;
+            mainMenuComponent.OnClickContinue();
+            bool gameSceneLoaded = GameSceneManager.Instance.LoadGameScene();
             //Assert
-            Assert.IsFalse(true);
+            Assert.IsTrue(gameSceneLoaded);
         }
     }
 }
