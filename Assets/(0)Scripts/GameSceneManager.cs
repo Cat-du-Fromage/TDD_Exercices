@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -9,20 +10,26 @@ using UnityEngine.SceneManagement;
 
 namespace KaizerWaldCode
 {
-    public class GameSceneManager
+    public class GameSceneManager : MonoBehaviour
     {
+        public AssetReference MainMenuAsset;
+        
         private const string MAIN_MENU_ASSET = "MainMenu";
         private const string GAME_SCENE_ASSET = "Game";
 
-        private AsyncOperationHandle<SceneInstance> handle;
+        private static bool clearPreviousScene = false;
+        //private static SceneInstance previousLoadedScene = new SceneInstance();
+
+        private static AsyncOperationHandle<SceneInstance> previousLoadedScene;
     
-        private static GameSceneManager instance;
-        /*
-        void Awake()
+        private GameSceneManager instance;
+
+        
+        private void Awake()
         {
-            if (Instance is null)
+            if (instance is null)
             {
-                Instance = this;
+                instance = this;
                 DontDestroyOnLoad(gameObject);
             }
             else
@@ -30,7 +37,18 @@ namespace KaizerWaldCode
                 Destroy(gameObject);
             }
         }
-        */
+
+        private void Start()
+        {
+            
+            Addressables.LoadSceneAsync(MainMenuAsset, LoadSceneMode.Additive).Completed += (asyncHandle) =>
+            {
+                previousLoadedScene = asyncHandle;
+            };
+            Debug.Log("ACTUALL START!");
+        }
+
+        /*
         public static GameSceneManager Instance
         {
             get
@@ -39,38 +57,33 @@ namespace KaizerWaldCode
                 return instance;
             }
         }
-
-        private bool LoadSceneAddressable(string key)
+        */
+        private static void LoadSceneAddressable(string key)
         {
-            Addressables.LoadSceneAsync(key, LoadSceneMode.Additive).Completed += OnLoadComplete;
-            if (handle.Status == AsyncOperationStatus.Succeeded)
-            {
-                return true;
-            }
-            return false;
+            Addressables.LoadSceneAsync(key, LoadSceneMode.Additive).Completed += UnloadAddressableScene;
         }
 
-        private void OnLoadComplete(AsyncOperationHandle<SceneInstance> op)
+        private static void OnLoadComplete(AsyncOperationHandle<SceneInstance> op)
         {
-        
             if (op.Status == AsyncOperationStatus.Succeeded)
             {
-                Debug.Log("SCENE LOADED");
-                handle = op;
+                previousLoadedScene = op;
             }
         }
-/*
-        private void UnloadScene()
+        
+        private static void UnloadAddressableScene(AsyncOperationHandle<SceneInstance> op)
         {
-            Scene scene = SceneManager.GetSceneByName("Game");
-            SceneInstance io = new SceneInstance();
-            io.Scene = scene;
-            SceneManager.UnloadSceneAsync(scene);
-            //handle = scene;
-            Addressables.UnloadSceneAsync(io,true);
+            if (op.Status == AsyncOperationStatus.Succeeded)
+            {
+                Addressables.UnloadSceneAsync(previousLoadedScene).Completed += (asyncHandle) =>
+                {
+                    previousLoadedScene = op;
+                    Debug.Log("UnloadComplete");
+                };
+            }
         }
-*/
-        public bool LoadGameScene() => LoadSceneAddressable(GAME_SCENE_ASSET);
+
+        public static void LoadGameScene() => LoadSceneAddressable(GAME_SCENE_ASSET);
     }
 }
 

@@ -183,9 +183,9 @@ namespace PlayModeTest
             //Act
             //Button continueButton = mainMenuComponent.ContinueButton;
             mainMenuComponent.OnClickContinue();
-            bool gameSceneLoaded = GameSceneManager.Instance.LoadGameScene();
+            //bool gameSceneLoaded = GameSceneManager.LoadGameScene();
             //Assert
-            Assert.IsTrue(gameSceneLoaded);
+            Assert.IsTrue(false);
         }
     }
 }
