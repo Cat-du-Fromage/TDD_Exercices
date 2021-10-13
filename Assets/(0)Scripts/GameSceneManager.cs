@@ -4,86 +4,91 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using UnityEngine.AddressableAssets.Initialization;
+using UnityEngine.AddressableAssets.ResourceLocators;
+using UnityEngine.ResourceManagement;
 using UnityEngine.ResourceManagement.AsyncOperations;
+using UnityEngine.ResourceManagement.ResourceLocations;
 using UnityEngine.ResourceManagement.ResourceProviders;
+using UnityEngine.ResourceManagement.Util;
 using UnityEngine.SceneManagement;
 
 namespace KaizerWaldCode
 {
     public class GameSceneManager : MonoBehaviour
     {
-        public AssetReference MainMenuAsset;
+        public AssetReference MainMenuSceneAsset;
+        public AssetReference GameSceneAsset;
         
         private const string MAIN_MENU_ASSET = "MainMenu";
         private const string GAME_SCENE_ASSET = "Game";
 
-        private static bool clearPreviousScene = false;
-        //private static SceneInstance previousLoadedScene = new SceneInstance();
-
         private static AsyncOperationHandle<SceneInstance> previousLoadedScene;
-    
-        private GameSceneManager instance;
 
+        private static GameSceneManager instance;
+        public static GameSceneManager Instance
+        {
+            get
+            {
+                if (instance is null)
+                {
+                    instance = FindObjectOfType<GameSceneManager>();
+                    if (instance is null)
+                    {
+                        instance = new GameObject("GameSceneManager").AddComponent<GameSceneManager>();
+                    }
+                }
+                return instance;
+            }
+        }
         
         private void Awake()
         {
-            if (instance is null)
+            if (instance is not null)
             {
-                instance = this;
-                DontDestroyOnLoad(gameObject);
+                Destroy(gameObject);
             }
             else
             {
-                Destroy(gameObject);
+                Instance.enabled = true;
             }
         }
 
         private void Start()
         {
-            
-            Addressables.LoadSceneAsync(MainMenuAsset, LoadSceneMode.Additive).Completed += (asyncHandle) =>
+            FirstSceneLoading();
+        }
+
+        /// <summary>
+        /// Load the very first main menu when we enter the game
+        /// We dont want to unload anything here
+        /// </summary>
+        private void FirstSceneLoading()
+        {
+            Addressables.LoadSceneAsync(MainMenuSceneAsset, LoadSceneMode.Additive).Completed += (asyncHandle) =>
             {
                 previousLoadedScene = asyncHandle;
             };
-            Debug.Log("ACTUALL START!");
-        }
-
-        /*
-        public static GameSceneManager Instance
-        {
-            get
-            {
-                instance ??= new GameSceneManager();
-                return instance;
-            }
-        }
-        */
-        private static void LoadSceneAddressable(string key)
-        {
-            Addressables.LoadSceneAsync(key, LoadSceneMode.Additive).Completed += UnloadAddressableScene;
-        }
-
-        private static void OnLoadComplete(AsyncOperationHandle<SceneInstance> op)
-        {
-            if (op.Status == AsyncOperationStatus.Succeeded)
-            {
-                previousLoadedScene = op;
-            }
         }
         
-        private static void UnloadAddressableScene(AsyncOperationHandle<SceneInstance> op)
+        //=====================================================================================================================
+        //Load then on complete unload the previous scene loaded
+        //======================================================
+        private void LoadScene(string key)
+        {
+            Addressables.LoadSceneAsync(key, LoadSceneMode.Additive).Completed += UnloadScene;
+        }
+
+        private void UnloadScene(AsyncOperationHandle<SceneInstance> op)
         {
             if (op.Status == AsyncOperationStatus.Succeeded)
             {
-                Addressables.UnloadSceneAsync(previousLoadedScene).Completed += (asyncHandle) =>
-                {
-                    previousLoadedScene = op;
-                    Debug.Log("UnloadComplete");
-                };
+                Addressables.UnloadSceneAsync(previousLoadedScene).Completed += (asyncHandle) => previousLoadedScene = op;
             }
         }
+        //=====================================================================================================================
 
-        public static void LoadGameScene() => LoadSceneAddressable(GAME_SCENE_ASSET);
+        public void LoadGameScene() => LoadScene(GAME_SCENE_ASSET);
     }
 }
 

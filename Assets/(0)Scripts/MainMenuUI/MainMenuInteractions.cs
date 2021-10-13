@@ -62,7 +62,7 @@ namespace KaizerWaldCode.UI.MainMenu
 
         public void OnClickContinue()
         {
-            GameSceneManager.LoadGameScene();
+            GameSceneManager.Instance.LoadGameScene();
         }
         
         private void OnClickLoadGame()

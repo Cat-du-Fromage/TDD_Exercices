@@ -173,19 +173,19 @@ namespace PlayModeTest
         }
         
         [Test]
-        public void UIMainMenu_OnContinueClicked_False()
+        public void UIMainMenu_OnContinueClicked_GameSceneLoaded_True()
         {
             //Arrange
             Directory.Delete(MainSaveDirectory.Instance.MainSaveDirInfo.FullName, true);
-            //Create Directory
             string sub1 = "sub1";
             MainSaveDirectory.Instance.MainSaveDirInfo.CreateSubdirectory(sub1);
+            
             //Act
-            //Button continueButton = mainMenuComponent.ContinueButton;
-            mainMenuComponent.OnClickContinue();
-            //bool gameSceneLoaded = GameSceneManager.LoadGameScene();
+            //Debug.Log($"GAME SCENE MANA {GameSceneManager.Instance.name}");
+            GameSceneManager.Instance.LoadGameScene();
+            Scene gameScene = SceneManager.GetSceneByName("Game");
             //Assert
-            Assert.IsTrue(false);
+            Assert.IsTrue(gameScene.isLoaded);
         }
     }
 }
