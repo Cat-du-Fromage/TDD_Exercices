@@ -19,6 +19,8 @@ namespace KaizerWaldCode.UI.MainMenu
         
         void OnEnable()
         {
+            KwSceneUtils.Init();
+            
             VisualElement root = GetComponent<UIDocument>().rootVisualElement;
             NewGameButton = root.Q<Button>("newGame-button");
             ContinueButton = root.Q<Button>("continue-button");
@@ -62,7 +64,7 @@ namespace KaizerWaldCode.UI.MainMenu
 
         public void OnClickContinue()
         {
-            GameSceneManager.Instance.LoadGameScene();
+            KwSceneUtils.Load(KwSceneUtils.KwScene.Game);
         }
         
         private void OnClickLoadGame()

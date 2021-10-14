@@ -1,34 +1,58 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.AddressableAssets.ResourceLocators;
 using UnityEngine.ResourceManagement;
+using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.ResourceManagement.ResourceLocations;
 using UnityEngine.ResourceManagement.ResourceProviders;
+using UnityEngine.SceneManagement;
 
 public static class KwSceneUtils
 {
-    public static void LoadScene()
+    public enum KwScene
     {
-        foreach (IResourceLocator locator in Addressables.ResourceLocators)
+        MainMenu,
+        Game,
+    }
+
+    private static Dictionary<KwScene ,SceneInstance> sceneInstances;
+    private static List<SceneInstance> LsceneInstances;
+    static KwSceneUtils()
+    {
+        sceneInstances = new Dictionary<KwScene ,SceneInstance>(Enum.GetValues(typeof(KwScene)).Length);
+        /*
+        List<string> keys = new List<string>(){"MainMenu", "Game"};
+        var test = Addressables.LoadResourceLocationsAsync(keys, Addressables.MergeMode.Intersection, typeof(SceneInstance));
+        foreach (var t in test.Result)
         {
-
-            IList<IResourceLocation> locations = new List<IResourceLocation>();
-
-            bool success = locator.Locate("Game", typeof(SceneInstance), out locations);
-
-            string s = locations[0].ProviderId;
-            var t = locations[0].ResourceType;
-            Debug.Log($"type is {t.ToString()}");
-            Debug.Log(s);
+            //Addressables.ResourceManager.ProvideScene(test.Result, );
+            //LsceneInstances.Add(test.Result.GetEnumerator());
+        }
+        */
+        foreach (KwScene scene in Enum.GetValues(typeof(KwScene)))
+        {
+            Addressables.LoadSceneAsync(scene.ToString(), LoadSceneMode.Single).Completed += (handle) =>
+            {
+                Addressables.UnloadSceneAsync(handle.Result).Completed += (handle2) =>
+                {
+                    sceneInstances.Add(scene,handle2.Result);
+                };
+            };
         }
 
+        //sceneInstances.TryGetValue(KwScene.MainMenu, out SceneInstance mainMenuSi);
+        //Debug.Log(mainMenuSi.Scene.Equals(SceneManager.GetSceneByName("MainMenu")));
+        //Addressables.LoadSceneAsync(mainMenuSi, LoadSceneMode.Single);
     }
 
-    public static void GetSceneInstance()
+    public static bool Init() => true;
+
+    public static void Load(KwScene scene)
     {
-        ResourceManager rm = new ResourceManager();
-        //rm.GetResourceProvider(SceneInstance, "test");
+        Addressables.LoadSceneAsync(scene.ToString(), LoadSceneMode.Single);
     }
+    
 }

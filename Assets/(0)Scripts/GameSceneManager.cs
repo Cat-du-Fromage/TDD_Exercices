@@ -58,7 +58,8 @@ namespace KaizerWaldCode
 
         private void Start()
         {
-            FirstSceneLoading();
+            //KwSceneUtils.ProvideScene();
+            //FirstSceneLoading();
         }
 
         /// <summary>
