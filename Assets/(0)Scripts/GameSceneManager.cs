@@ -44,6 +44,7 @@ namespace KaizerWaldCode
         
         private void Awake()
         {
+            /*
             if (instance is not null)
             {
                 Destroy(gameObject);
@@ -52,6 +53,7 @@ namespace KaizerWaldCode
             {
                 Instance.enabled = true;
             }
+            */
         }
 
         private void Start()
