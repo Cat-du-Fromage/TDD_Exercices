@@ -91,9 +91,7 @@ public static class KwSceneUtils
     
     public static async Task GetAll(string label, IList<IResourceLocation> loadedLocations)
     {
-        IList<IResourceLocation> unloadedLocations = new List<IResourceLocation>();
-        
-        unloadedLocations = await Addressables.LoadResourceLocationsAsync(label).Task;
+        IList<IResourceLocation> unloadedLocations = await Addressables.LoadResourceLocationsAsync(label).Task;
 
         foreach (var location in unloadedLocations)
             loadedLocations.Add(location);
