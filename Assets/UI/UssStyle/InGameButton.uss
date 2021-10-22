@@ -1,0 +1,66 @@
+.inGameButton {
+    width: 180px;
+    height: 40px;
+    font-size: 24px;
+    -unity-font-style: bold;
+    margin-top: 12px;
+    margin-bottom: 12px;
+    border-top-left-radius: 12px;
+    border-bottom-left-radius: 12px;
+    border-top-right-radius: 12px;
+    border-bottom-right-radius: 12px;
+    border-left-color: rgb(0, 0, 0);
+    border-right-color: rgb(0, 0, 0);
+    border-top-color: rgb(0, 0, 0);
+    border-bottom-color: rgb(0, 0, 0);
+    border-left-width: 4px;
+    border-right-width: 4px;
+    border-top-width: 4px;
+    border-bottom-width: 4px;
+}
+
+.inGameButton:hover {
+    width: 180px;
+    height: 40px;
+    font-size: 24px;
+    -unity-font-style: bold;
+    margin-top: 12px;
+    margin-bottom: 12px;
+    border-top-left-radius: 12px;
+    border-bottom-left-radius: 12px;
+    border-top-right-radius: 12px;
+    border-bottom-right-radius: 12px;
+    border-left-color: rgb(0, 0, 0);
+    border-right-color: rgb(0, 0, 0);
+    border-top-color: rgb(0, 0, 0);
+    border-bottom-color: rgb(0, 0, 0);
+    border-left-width: 4px;
+    border-right-width: 4px;
+    border-top-width: 4px;
+    border-bottom-width: 4px;
+    background-color: rgb(70, 70, 70);
+    color: rgb(190, 190, 190);
+}
+
+.inGameButton:active {
+    width: 180px;
+    height: 40px;
+    font-size: 24px;
+    -unity-font-style: bold;
+    margin-top: 12px;
+    margin-bottom: 12px;
+    border-top-left-radius: 12px;
+    border-bottom-left-radius: 12px;
+    border-top-right-radius: 12px;
+    border-bottom-right-radius: 12px;
+    border-left-color: rgb(0, 0, 0);
+    border-right-color: rgb(0, 0, 0);
+    border-top-color: rgb(0, 0, 0);
+    border-bottom-color: rgb(0, 0, 0);
+    border-left-width: 4px;
+    border-right-width: 4px;
+    border-top-width: 4px;
+    border-bottom-width: 4px;
+    background-color: rgb(65, 106, 70);
+    color: rgb(190, 190, 190);
+}

@@ -1,34 +1,33 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using KaizerWaldCode.PersistentData;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
 
-public abstract class ScriptableObjectSingelton<T> : ScriptableObject where T : ScriptableObject
+public abstract class ScriptableObjectSingleton<T> : ScriptableObject where T : ScriptableObject
 {
-    private static string _label = String.Empty;
+    private static string label = String.Empty;
     
     private static T instance = null;
 
-    protected static T GetInstance(string label)
+    protected static T GetInstance(string lbl)
     {
-        _label = label;
+        label = lbl;
         return Instance;
     }
 
-    public static T Instance
+    private static T Instance
     {
         get
         {
-            if (!instance)
-            {
-                AsyncOperationHandle<T> csHandle = Addressables.LoadAssetAsync<T>(_label);
-                csHandle.WaitForCompletion();
-                instance = csHandle.Result;
-                Debug.Log($"Asset LOADED : {instance.name}");
-            }
+            if (instance is not null) return instance;
+            AsyncOperationHandle<T> csHandle = Addressables.LoadAssetAsync<T>(label);
+            csHandle.WaitForCompletion();
+            instance = csHandle.Result;
+            Debug.Log($"Asset LOADED : {instance.name}");
             return instance;
         }
     }

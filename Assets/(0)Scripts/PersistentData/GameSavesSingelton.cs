@@ -10,30 +10,19 @@ using static KaizerWaldCode.Utils.AddressablesUtils;
 namespace KaizerWaldCode.PersistentData
 {
     [CreateAssetMenu(fileName = "GameSaves", menuName = "KaizerWald/PersistentData", order = 1)]
-    public class GameSavesSingelton : ScriptableObjectSingelton<GameSavesSingelton>
+    public class GameSavesSingleton : ScriptableObjectSingleton<GameSavesSingleton>
     {
         private const string GAME_SAVES_ASSET_NAME = "GameSavesData";
         
-        private const string GAME_SAVES_NAME = @"\Game Saves";
-
-        public static DirectoryInfo MainGameSaves;
-        
-        [SerializeField]
-        private GameSavesSingelton _inst;
-
+        public static GameSavesSingleton inst;
+/*
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void FirstInitialize()
         {
-            GetInstance(GAME_SAVES_ASSET_NAME);
-            //Debug.Log($"Test If it loads");
+           GetInstance(GAME_SAVES_ASSET_NAME);
+            Debug.Log($"Test If it loads");
         }
-
-        public static GameSavesSingelton gameSavesSingelton
-        {
-            get
-            {
-                return GetInstance(GAME_SAVES_ASSET_NAME)._inst;
-            }
-        }
+*/
+        public static GameSavesSingleton gameSavesSingleton => GetInstance(GAME_SAVES_ASSET_NAME);
     }
 }
