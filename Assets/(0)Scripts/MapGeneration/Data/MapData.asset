@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9168cf1c616443129ba633b5319106ae, type: 3}
+  m_Name: MapData
+  m_EditorClassIdentifier: 
+  ChunkSize: 10
+  NumChunk: 4
+  PointPerMeter: 2
+  Seed: 1
+  MapSize: 40
+  ChunkPointPerAxis: 11
+  MapPointPerAxis: 41
+  PointSpacing: 1
+  TotalChunkPoints: 121
+  TotalMapPoints: 1681
+  SaveName: DefaultSaveName

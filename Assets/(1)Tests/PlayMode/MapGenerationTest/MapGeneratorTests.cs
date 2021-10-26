@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using KaizerWaldCode.MapGeneration;
+using KaizerWaldCode.MapGeneration.Data;
 using KaizerWaldCode.UI.MainMenu;
 using NUnit.Framework;
 using UnityEditor.SceneManagement;
@@ -8,6 +9,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 using static Unity.Mathematics.math;
+using float2 = Unity.Mathematics.float2;
 using UnityAssert = UnityEngine.Assertions.Assert;
 
 namespace PlayModeTest
@@ -17,23 +19,72 @@ namespace PlayModeTest
     {
         private GameObject UIMainMenu;
         private MainMenuInteractions mainMenuComponent;
-        /*
+        private NoiseSettings noiseSettings;
+
+        private GameObject mapGenObj;
+
+        private MapGenerator mapGenComp;
+
+        private NoiseSettingsInputs noiseInputs;
+        
+        private MapSettingsInputs mapInputs;
         [UnitySetUp]
         public IEnumerator UnitySetup()
         {
-            yield return EditorSceneManager.LoadSceneAsyncInPlayMode("Assets/Scenes/MainMenu.unity", new LoadSceneParameters(LoadSceneMode.Single));
-            UIMainMenu = GameObject.Find("UIMainMenu");
-            mainMenuComponent = UIMainMenu.GetComponent<MainMenuInteractions>();
-        }
-        */
-        [OneTimeSetUp]
-        public void Setup()
-        {
-            EditorSceneManager.LoadSceneInPlayMode("Assets/Scenes/Game.unity", new LoadSceneParameters(LoadSceneMode.Single));
-            
-            UIMainMenu = GameObject.Find("UIMainMenu");
+            yield return EditorSceneManager
+                .LoadSceneAsyncInPlayMode("Assets/Scenes/Game.unity", new LoadSceneParameters(LoadSceneMode.Single));
+            this.mapGenObj = GameObject.Find("MapGenerator");
+            this.mapGenComp = mapGenObj.GetComponent<MapGenerator>();
+
+            mapInputs = new MapSettingsInputs
+            {
+                chunkSize = 1,
+                numChunk = 2,
+                pointPerMeter = 2,
+                seed = 1
+            };
+
+            noiseInputs = new NoiseSettingsInputs
+            {
+                octaves = 4,
+                scale = 10f,
+                persistence = 0.5f,
+                lacunarity = 2f,
+                heightMultiplier = 1f,
+                offset = float2.zero
+            };
         }
         
+        /*
+        [OneTimeSetUp]
+        public void OneTimeSetup()
+        {
+            if (SceneManager.GetActiveScene() != SceneManager.GetSceneByName("Game"))
+            {
+                EditorSceneManager.LoadSceneInPlayMode("Assets/Scenes/Game.unity", new LoadSceneParameters(LoadSceneMode.Single));
+            }
+            Debug.Log(SceneManager.GetActiveScene().path);
+            noiseSettings = new NoiseSettings();
+            mapGenObj = GameObject.Find("MapGenerator");
+            mapGenComp = mapGenObj.GetComponent<MapGenerator>();
+            
+        }
+        */
+        /*
+        [SetUp]
+        public void Setup()
+        {
+            if (SceneManager.GetActiveScene() != SceneManager.GetSceneByName("Game"))
+            {
+                EditorSceneManager.LoadSceneInPlayMode("Assets/Scenes/Game.unity", new LoadSceneParameters(LoadSceneMode.Single));
+            }
+            
+            noiseSettings = new NoiseSettings();
+            mapGenObj = GameObject.Find("MapGenerator");
+            mapGenComp = mapGenObj.GetComponent<MapGenerator>();
+            
+        }
+        */
         [Test]
         public void MapSettings_OnClickNewGame_CreateMapSettings_Exist()
         {
@@ -58,8 +109,6 @@ namespace PlayModeTest
             int defautlMapSize = 40;
             int defautlChunkPointPerAxis = 11;
             int defautlMapPointPerAxis = 41;
-
-            MapSettings defaultMapSettings = new MapSettings(defaultName,defaultChunkSize,defaultNumChunk,defaultPointPerMeter,defaultSeed);
             //Act
             MapSettings mapSettings = new MapSettings();
             //Assert
@@ -78,26 +127,55 @@ namespace PlayModeTest
         public void MapGenerator_OnGetVertices_InitializeVerticesArray_Exist()
         {
             //Arrange
-            GameObject mapGen = new GameObject("MapGenerator", typeof(MapGenerator));
-            MapGenerator mapGenData = mapGen.GetComponent<MapGenerator>();
-            MapSettings mapSettings = new MapSettings();
             //Act
-            mapGenData.Initialize(mapSettings);
+            mapGenComp.NewGameSettings(mapInputs, noiseInputs,"TestMapGen");
             //Assert
-            Assert.IsNotNull(mapGenData.vertices);
+            Assert.IsNotNull(mapGenComp.vertices);
         }
         
         [Test]
         public void MapGenerator_OnGetUvs_InitializeUvsArray_Exist()
         {
             //Arrange
-            GameObject mapGen = new GameObject("MapGenerator", typeof(MapGenerator));
-            MapGenerator mapGenData = mapGen.GetComponent<MapGenerator>();
-            MapSettings mapSettings = new MapSettings();
+            mapGenObj = GameObject.Find("MapGenerator");
+            mapGenComp = mapGenObj.GetComponent<MapGenerator>();
             //Act
-            mapGenData.Initialize(mapSettings);
+            mapGenComp.NewGameSettings(mapInputs, noiseInputs,"TestMapGen");
             //Assert
-            Assert.IsNotNull(mapGenData.uvs);
+            Assert.IsNotNull(mapGenComp.uvs);
+        }
+        
+        [Test]
+        public void MapGenerator_Triangles_ArraySizeEqualTrianglesVertices_True()
+        {
+            //Arrange
+            Debug.Log($"Scene Name = {SceneManager.GetActiveScene().name}");
+            mapGenObj = GameObject.Find("MapGenerator");
+            Debug.Log($"MapGener Name = {mapGenObj.name}");
+            mapGenComp = mapGenObj.GetComponent<MapGenerator>();
+            Debug.Log($"MapGener Name = {mapGenComp.name}");
+            int expectedTriVertices = 24;
+            //Act
+            mapGenComp.NewGameSettings(mapInputs, noiseInputs,"TestMapGen");
+            //Assert
+            Assert.AreEqual(expectedTriVertices, mapGenComp.triangles.Length);
+        }
+        
+        [Test]
+        public void MapGenerator_Triangles_AreVerticesAlign_True()
+        {
+            //Arrange
+            int[] firstQuad = new []{3,4,0,1,0,4};
+            int[] secondQuad = new []{4,5,1,2,1,5};
+            int[] thirdQuad = new []{6,7,3,4,3,7};
+            int[] forthQuad = new []{7,8,4,5,4,8};
+            //Act
+            mapGenComp.NewGameSettings(mapInputs, noiseInputs,"TestMapGen");
+            //Assert
+            Assert.AreEqual(firstQuad, mapGenComp.triangles[0.. 6]);
+            Assert.AreEqual(secondQuad, mapGenComp.triangles[6.. 12]);
+            Assert.AreEqual(thirdQuad, mapGenComp.triangles[12.. 18]);
+            Assert.AreEqual(forthQuad, mapGenComp.triangles[18.. 24]);
         }
     }
 }

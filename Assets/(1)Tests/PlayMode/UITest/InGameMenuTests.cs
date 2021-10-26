@@ -65,7 +65,7 @@ namespace PlayModeTest
             //Assert
             Assert.IsFalse(inGameMenu.activeSelf);
         }
-        
+        /*
         [UnityTest]
         public IEnumerator InGameMenu_OnMainMenuClicked_MainMenuSceneLoaded_True()
         {
@@ -78,5 +78,6 @@ namespace PlayModeTest
             //Assert
             Assert.IsTrue(gameScene.isLoaded);
         }
+        */
     }
 }

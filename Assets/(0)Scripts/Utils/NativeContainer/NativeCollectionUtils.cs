@@ -75,5 +75,14 @@ namespace KaizerWaldCode.Utils
             result.CopyFrom(s);
             return result;
         }
+
+        public static U[] ReinterpretArray<T,U>(T[] array) 
+            where T : struct //from
+            where U : struct //to
+        {
+            using NativeArray<T> temp = new NativeArray<T>(array.Length, Allocator.Temp, NativeArrayOptions.UninitializedMemory);
+            temp.CopyFrom(array);
+            return temp.Reinterpret<U>().ToArray();
+        }
     }
 }

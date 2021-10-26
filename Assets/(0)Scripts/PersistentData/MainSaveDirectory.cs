@@ -10,14 +10,15 @@ namespace KaizerWaldCode.PersistentData
         private const string MAIN_SAVES_NAME = "Game Saves";
         
         public readonly DirectoryInfo MainSaveDirInfo;
-        
+
+        //==========================================================================================================================================
+        //Singleton Pattern
+        //==========================================================================================================================================
+        private static MainSaveDirectory instance;
         private MainSaveDirectory()
         {
             MainSaveDirInfo = Directory.CreateDirectory(Path.Combine(Application.persistentDataPath, MAIN_SAVES_NAME));
         }
-        
-        //Singleton Pattern
-        private static MainSaveDirectory instance;
         public static MainSaveDirectory Instance
         {
             get
@@ -27,13 +28,25 @@ namespace KaizerWaldCode.PersistentData
                 return instance;
             }
         }
-
+        /// <summary>
+        /// Create Main Save Directory if it doesn't already exist
+        /// </summary>
         private void CreateMainSave()
         {
             if (!Directory.Exists(MainSaveDirInfo.FullName))
             {
                 MainSaveDirInfo.Create();
             }
+        }
+        //==========================================================================================================================================
+        public void CreateNewSave(string saveName)
+        {
+            string fullPath = Path.Combine(MainSaveDirInfo.FullName, saveName);
+            if (Directory.Exists(fullPath))
+            {
+                Directory.Delete(fullPath, true);
+            }
+            MainSaveDirInfo.CreateSubdirectory(saveName);
         }
         
         public bool Exist() => Directory.Exists(MainSaveDirInfo.FullName);

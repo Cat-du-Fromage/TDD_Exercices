@@ -1,8 +1,9 @@
 {
   "dependencies": {
     "com.unity.addressables": "1.19.9",
+    "com.unity.ai.navigation": "1.0.0-exp.4",
     "com.unity.burst": "1.6.1",
-    "com.unity.cinemachine": "2.8.1",
+    "com.unity.cinemachine": "2.8.2",
     "com.unity.collab-proxy": "1.13.5",
     "com.unity.collections": "1.0.0-pre.6",
     "com.unity.ide.rider": "3.0.7",
@@ -10,8 +11,9 @@
     "com.unity.ide.vscode": "1.2.4",
     "com.unity.inputsystem": "1.1.1",
     "com.unity.mathematics": "1.2.4",
+    "com.unity.nuget.newtonsoft-json": "2.0.2",
     "com.unity.probuilder": "5.0.3",
-    "com.unity.render-pipelines.universal": "12.0.0",
+    "com.unity.render-pipelines.universal": "12.1.0",
     "com.unity.test-framework": "1.1.30",
     "com.unity.textmeshpro": "3.0.6",
     "com.unity.timeline": "1.6.2",

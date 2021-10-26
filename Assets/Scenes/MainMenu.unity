@@ -184,6 +184,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8863a72baa6b2854eaa59c969f3fef73, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  noiseInputs:
+    octaves: 4
+    scale: 20
+    persistence: 0.5
+    lacunarity: 2
+    heightMultiplier: 2
+    offset:
+      x: 0
+      y: 0
+  mapInputs:
+    chunkSize: 10
+    numChunk: 10
+    pointPerMeter: 2
+    seed: 1
 --- !u!1 &1125713954
 GameObject:
   m_ObjectHideFlags: 0

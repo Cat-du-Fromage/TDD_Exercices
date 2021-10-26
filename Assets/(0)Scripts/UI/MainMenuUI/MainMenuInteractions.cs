@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using KaizerWaldCode.MapGeneration;
+using KaizerWaldCode.MapGeneration.Data;
 using KaizerWaldCode.PersistentData;
 using KaizerWaldCode.Utils;
 using UnityEngine;
@@ -25,6 +26,8 @@ namespace KaizerWaldCode.UI.MainMenu
         public Button SettingsButton;
         public Button QuitButton;
         
+        [SerializeField]private NoiseSettingsInputs noiseInputs;
+        [SerializeField]private MapSettingsInputs mapInputs;
         void OnEnable()
         {
             root = GetComponent<UIDocument>().rootVisualElement;
@@ -66,7 +69,9 @@ namespace KaizerWaldCode.UI.MainMenu
             {
                 GameObject mapGen = GameObject.FindObjectOfType<MapGenerator>().gameObject;
                 MapGenerator mapGenData = mapGen.GetComponent<MapGenerator>();
-                mapGenData.Initialize(new MapSettings());
+
+                mapGenData.NewGameSettings(mapInputs, noiseInputs,"DefaultSaveName");
+                //mapGenData.Initialize(new MapSettings("DefaultSaveName", 10,10, 2), new NoiseSettings());
                 //GameObject.Find("Plane").SetActive(false);
             };
         }

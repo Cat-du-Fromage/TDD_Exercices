@@ -15,7 +15,6 @@ namespace PlayModeTest
         {
             if(Directory.Exists(MainSaveDirectory.Instance.MainSaveDirInfo.FullName))
                 MainSaveDirectory.Instance.MainSaveDirInfo.Delete(true);
-            //DirectoryInfo path = MainSaveDirectory.GameSavesPath;
         }
         
         [Test, Order(1)]
@@ -57,6 +56,30 @@ namespace PlayModeTest
             int getNumSaves = MainSaveDirectory.Instance.GetNumSubfolders();
             //Assert
             Assert.AreEqual(expected, getNumSaves);
+        }
+        
+        [Test, Order(4)]
+        public void MainSaveDirectory_CreateSave_Exist()
+        {
+            //Arrange
+            string path1 = "SaveTest";
+            string fullPath = Path.Combine(MainSaveDirectory.Instance.MainSaveDirInfo.FullName, path1);
+            //Act
+            MainSaveDirectory.Instance.CreateNewSave(path1);
+            //Assert
+            DirectoryAssert.Exists(fullPath);
+        }
+        
+        [Test, Order(4)]
+        public void MainSaveDirectory_CreateMapSettingsFile_Exist()
+        {
+            //Arrange
+            string path1 = "SaveTest";
+            string fullPath = Path.Combine(MainSaveDirectory.Instance.MainSaveDirInfo.FullName, path1);
+            //Act
+            MainSaveDirectory.Instance.CreateNewSave(path1);
+            //Assert
+            DirectoryAssert.Exists(fullPath);
         }
     }
 }
