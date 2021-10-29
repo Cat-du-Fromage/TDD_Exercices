@@ -19,51 +19,47 @@ namespace KaizerWaldCode.MapGeneration
 {
     public static class Noise
     {
-        public static float[] GetNoiseMap(MapSettings mapSettings, NoiseSettings noiseSettings, JobHandle dependency = default)
+        public static float[] GetNoiseMap(GeneralMapSettings generalMapSettings, MapSettings mapSettings, NoiseSettings noiseSettings, JobHandle dependency = default)
         {
-            using NativeArray<float2> noiseOffsetsMap = AllocNtvAry<float2>(noiseSettings.Octaves);
-            OffsetNoiseRandomJob offsetsNoiseJ = new OffsetNoiseRandomJob
-            {
-                JSeed = mapSettings.Seed,
-                JOffset = noiseSettings.Offset,
-                JOctavesOffset = noiseOffsetsMap,
-            };
-            JobHandle offsetsJH = offsetsNoiseJ.ScheduleParallel(noiseSettings.Octaves,JobsUtility.JobWorkerCount - 1, dependency);
-            //=================
-            //PERLIN NOISE
-            //=================
-            using NativeArray<float> perlinNoiseMap = AllocNtvAry<float>(mapSettings.TotalMapPoints);
+            //RANDOM OFFSETS
+            //==========================================================================================================
+            using NativeArray<float2> noiseOffsetsMap = AllocNtvAry<float2>(noiseSettings.octaves);
             
-            PerlinNoiseJob perlinNoiseJ = new PerlinNoiseJob
-            {
-                JNumPointPerAxis = mapSettings.MapPointPerAxis,
-                JOctaves = noiseSettings.Octaves,
-                JLacunarity = noiseSettings.Lacunarity,
-                JPersistence = noiseSettings.Persistence,
-                JScale = noiseSettings.Scale,
-                JHeightMul = noiseSettings.HeightMultiplier,
-                JOctOffsetArray = noiseOffsetsMap,
-                JNoiseMap = perlinNoiseMap,
-            };
-            JobHandle perlinNoiseJH = perlinNoiseJ.ScheduleParallel(mapSettings.TotalMapPoints,JobsUtility.JobWorkerCount - 1, offsetsJH);
+            OffsetNoiseRandomJob offsetsNoiseJ = new OffsetNoiseRandomJob(generalMapSettings.seed, noiseSettings.offset, noiseOffsetsMap);
+            JobHandle offsetsJH = offsetsNoiseJ.ScheduleParallel(noiseSettings.octaves,JobsUtility.JobWorkerCount - 1, dependency);
+            
+            //PERLIN NOISE
+            //==========================================================================================================
+            using NativeArray<float> perlinNoiseMap = AllocNtvAry<float>(mapSettings.totalMapPoints);
+            
+            PerlinNoiseJob perlinNoiseJ = new PerlinNoiseJob(mapSettings.mapPointPerAxis, noiseSettings, noiseOffsetsMap, perlinNoiseMap);
+            JobHandle perlinNoiseJH = perlinNoiseJ.ScheduleParallel(mapSettings.totalMapPoints,JobsUtility.JobWorkerCount - 1, offsetsJH);
             perlinNoiseJH.Complete();
+            
             return perlinNoiseMap.ToArray();
         }
-
-        //=====================================================================
-        // JOB SYSTEM
-        //=====================================================================
         
-        /// <summary>
-        /// Process RandomJob
-        /// </summary>
+        //==============================================================================================================
+        // JOB SYSTEM
+        //==============================================================================================================
+        
+        // RANDOM OFFSETS
+        //==============================================================================================================
         [BurstCompile(CompileSynchronously = true)]
         private struct OffsetNoiseRandomJob : IJobFor
         {
-            [ReadOnly] public uint JSeed;
-            [ReadOnly] public float2 JOffset;
+            [ReadOnly] private uint                 JSeed;
+            [ReadOnly] private float2               JOffset;
             [NativeDisableParallelForRestriction]
-            [WriteOnly] public NativeArray<float2> JOctavesOffset;
+            [WriteOnly] private NativeArray<float2> JOctavesOffset;
+
+            public OffsetNoiseRandomJob(uint seed, float2 offset, NativeArray<float2> offsets)
+            {
+                JSeed          = seed;
+                JOffset        = offset;
+                JOctavesOffset = offsets;
+            }
+            
             public void Execute(int index)
             {
                 Random prng = Random.CreateFromIndex(JSeed + (uint)index);
@@ -73,22 +69,33 @@ namespace KaizerWaldCode.MapGeneration
             }
         }
         
-        /// <summary>
-        /// Noise Height Map
-        /// </summary>
+        // NOISE/HEIGHT MAP
+        //==============================================================================================================
         [BurstCompile(CompileSynchronously = true)]
         private struct PerlinNoiseJob : IJobFor
         {
-            [ReadOnly] public int JNumPointPerAxis;
-            [ReadOnly] public int JOctaves;
-            [ReadOnly] public float JLacunarity;
-            [ReadOnly] public float JPersistence;
-            [ReadOnly] public float JScale;
-            [ReadOnly] public float JHeightMul;
-            [ReadOnly] public NativeArray<float2> JOctOffsetArray;
+            [ReadOnly] private int                 JNumPointPerAxis;
+            [ReadOnly] private int                 JOctaves;
+            [ReadOnly] private float               JLacunarity;
+            [ReadOnly] private float               JPersistence;
+            [ReadOnly] private float               JScale;
+            [ReadOnly] private float               JHeightMul;
+            [ReadOnly] private NativeArray<float2> JOctOffsetArray;
         
             [NativeDisableParallelForRestriction]
-            [WriteOnly] public NativeArray<float> JNoiseMap;
+            [WriteOnly] private NativeArray<float> JNoiseMap;
+
+            public PerlinNoiseJob(int numPoints, NoiseSettings noiseSettings, NativeArray<float2> offsets, NativeArray<float> noiseMap)
+            {
+                JNumPointPerAxis = numPoints;
+                JOctOffsetArray  = offsets;
+                JNoiseMap        = noiseMap;
+                JOctaves         = noiseSettings.octaves;
+                JLacunarity      = noiseSettings.lacunarity;
+                JPersistence     = noiseSettings.persistence;
+                JScale           = noiseSettings.scale;
+                JHeightMul       = noiseSettings.heightMultiplier;
+            }
 
             public void Execute(int index)
             {

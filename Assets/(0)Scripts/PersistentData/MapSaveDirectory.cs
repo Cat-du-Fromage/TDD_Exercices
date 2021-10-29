@@ -5,30 +5,31 @@ namespace KaizerWaldCode.PersistentData
 {
     public class MapSaveDirectory
     {
+        //FIELDS
+        //==========================================================================================================================================
         private const string MAP_DATA_FOLDER = "MapData";
         
         private const string MAP_SETTINGS_FILE = "MapSettings.json";
         private string saveName;
-        public DirectoryInfo mapSaveDirInfo { get; private set; }
-        //==========================================================================================================================================
-        //Singleton Pattern
+        private static string currentSavePath;
+        public static DirectoryInfo mapSaveDirInfo { get; private set; }
+        
+        //SINGLETON PATTERN
         //==========================================================================================================================================
         private static MapSaveDirectory instance;
-        private MapSaveDirectory(string currentSaveName)
-        {
-            this.saveName = currentSaveName;
-            string currentSavePath = Path.Combine(MainSaveDirectory.Instance.MainSaveDirInfo.FullName, currentSaveName);
-            mapSaveDirInfo = GetOrCreateSave(currentSavePath);
-        }
+        private MapSaveDirectory(string currentSavePath) => mapSaveDirInfo = CreateSave();
+        
         public static MapSaveDirectory Instance(string currentSaveName)
         {
-            instance ??= new MapSaveDirectory(currentSaveName);
+            currentSavePath = Path.Combine(MainSaveDirectory.Instance.MainSaveDirInfo.FullName, currentSaveName);
+            instance ??= new MapSaveDirectory(currentSavePath);
+            mapSaveDirInfo = CreateSave();
             return instance;
         }
         /// <summary>
         /// Create Main Save Directory if it doesn't already exist
         /// </summary>
-        private DirectoryInfo GetOrCreateSave(string currentSavePath)
+        private static DirectoryInfo CreateSave()
         {
             string mapFolderPath = Path.Combine(currentSavePath, MAP_DATA_FOLDER);
             if (!Directory.Exists(mapFolderPath))
@@ -37,12 +38,11 @@ namespace KaizerWaldCode.PersistentData
             }
             return new DirectoryInfo(mapFolderPath);
         }
-        //==========================================================================================================================================
-        
-        //==========================================================================================================================================
-        //Methods
-        //==========================================================================================================================================
 
+        public DirectoryInfo GetCurrentSave() => mapSaveDirInfo;
+        
+        //METHODS
+        //==========================================================================================================================================
         /// <summary>
         /// Get (or create if don't exist) the FileInfo for map settings
         /// </summary>
@@ -50,12 +50,11 @@ namespace KaizerWaldCode.PersistentData
         public FileInfo GetOrCreateMapSettings()
         {
             string mapSettingsFilePath = Path.Combine(mapSaveDirInfo.FullName, MAP_SETTINGS_FILE);
-            FileInfo file = new FileInfo(mapSettingsFilePath);
-            if (!file.Exists)
+            if (!File.Exists(mapSettingsFilePath))
             {
-                file.Create();
+                File.Create(mapSettingsFilePath).Close();
             }
-            return file;
+            return new FileInfo(mapSettingsFilePath);
         }
     }
 }

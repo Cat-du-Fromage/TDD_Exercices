@@ -2043,7 +2043,7 @@ Mesh:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: pb_Mesh144728
+  m_Name: pb_Mesh190756
   serializedVersion: 10
   m_SubMeshes:
   - serializedVersion: 2
@@ -2493,6 +2493,7 @@ GameObject:
   - component: {fileID: 883810052}
   - component: {fileID: 883810051}
   - component: {fileID: 883810050}
+  - component: {fileID: 883810053}
   m_Layer: 0
   m_Name: MapGenerator
   m_TagString: Untagged
@@ -2514,9 +2515,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   meshFilter: {fileID: 883810052}
   meshRenderer: {fileID: 883810051}
-  colliderMesh: {fileID: 883810050}
+  colliderMesh: {fileID: 883810053}
   mapSettings: {fileID: 11400000, guid: 90cb5f355b7ff0f46b53e61b653a6491, type: 2}
   noiseSettings: {fileID: 11400000, guid: 16f45cfa0b20d03478060990da886fa7, type: 2}
+  generalMapSettings: {fileID: 11400000, guid: bb6a23c8cc48ae046b46854ccb50f9f2, type: 2}
 --- !u!4 &883810049
 Transform:
   m_ObjectHideFlags: 0
@@ -2541,7 +2543,7 @@ BoxCollider:
   m_GameObject: {fileID: 883810047}
   m_Material: {fileID: 0}
   m_IsTrigger: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 2
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
@@ -2594,6 +2596,20 @@ MeshFilter:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 883810047}
+  m_Mesh: {fileID: 0}
+--- !u!64 &883810053
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 883810047}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 4
+  m_Convex: 0
+  m_CookingOptions: 30
   m_Mesh: {fileID: 0}
 --- !u!1 &1192851298
 GameObject:

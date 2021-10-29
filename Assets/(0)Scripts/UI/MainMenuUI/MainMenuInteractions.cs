@@ -28,6 +28,7 @@ namespace KaizerWaldCode.UI.MainMenu
         
         [SerializeField]private NoiseSettingsInputs noiseInputs;
         [SerializeField]private MapSettingsInputs mapInputs;
+        [SerializeField]private GeneralSettingsInputs generalInputs;
         void OnEnable()
         {
             root = GetComponent<UIDocument>().rootVisualElement;
@@ -70,9 +71,7 @@ namespace KaizerWaldCode.UI.MainMenu
                 GameObject mapGen = GameObject.FindObjectOfType<MapGenerator>().gameObject;
                 MapGenerator mapGenData = mapGen.GetComponent<MapGenerator>();
 
-                mapGenData.NewGameSettings(mapInputs, noiseInputs,"DefaultSaveName");
-                //mapGenData.Initialize(new MapSettings("DefaultSaveName", 10,10, 2), new NoiseSettings());
-                //GameObject.Find("Plane").SetActive(false);
+                mapGenData.NewGameSettings(generalInputs, mapInputs, noiseInputs);
             };
         }
 
