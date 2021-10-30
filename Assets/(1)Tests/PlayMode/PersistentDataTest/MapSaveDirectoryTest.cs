@@ -18,16 +18,14 @@ namespace PlayModeTest
     public class MapSaveDirectoryTest
     {
         private NoiseSettings noiseSettings;
-
         private GameObject mapGenObj;
-
         private MapGenerator mapGenComp;
 
         private NoiseSettingsInputs noiseInputs;
-        
         private MapSettingsInputs mapInputs;
-        
         private GeneralSettingsInputs generalInputs;
+        
+        TerrainType[] regions;
         
         [UnitySetUp]
         public IEnumerator UnitySetup()
@@ -36,6 +34,8 @@ namespace PlayModeTest
                 .LoadSceneAsyncInPlayMode("Assets/Scenes/Game.unity", new LoadSceneParameters(LoadSceneMode.Single));
             this.mapGenObj = GameObject.Find("MapGenerator");
             this.mapGenComp = mapGenObj.GetComponent<MapGenerator>();
+
+            regions = new TerrainType[2];
 
             mapInputs = new MapSettingsInputs
             {
@@ -67,7 +67,7 @@ namespace PlayModeTest
             //Arrange
             
             //Act
-            mapGenComp.NewGameSettings(generalInputs,mapInputs,noiseInputs);
+            mapGenComp.NewGameSettings(generalInputs,mapInputs,noiseInputs,regions);
             DirectoryInfo saveDir = MapSaveDirectory.Instance(mapGenComp.GetGeneralMapSettings().saveName).GetCurrentSave();
             Debug.Log(MapSaveDirectory.Instance(mapGenComp.GetGeneralMapSettings().saveName).GetCurrentSave().FullName);
             //Assert
@@ -80,7 +80,7 @@ namespace PlayModeTest
             //Arrange
             
             //Act
-            mapGenComp.NewGameSettings(generalInputs,mapInputs,noiseInputs);
+            mapGenComp.NewGameSettings(generalInputs,mapInputs,noiseInputs,regions);
             //DirectoryInfo saveDir = MapSaveDirectory.GetOrCreateSave(mapGenComp.currentSaveName);
             FileInfo fileInfo = MapSaveDirectory.Instance(mapGenComp.GetGeneralMapSettings().saveName).GetOrCreateMapSettings();
             
@@ -102,7 +102,7 @@ namespace PlayModeTest
             };
             
             //Act
-            mapGenComp.NewGameSettings(generalInputs, mapInputs, noiseInputs);
+            mapGenComp.NewGameSettings(generalInputs, mapInputs, noiseInputs,regions);
             
             //Assert
             Debug.Log($"Expected : {Gsettings_SaveName} , Result : {mapGenComp.GetGeneralMapSettings().saveName}");
@@ -126,7 +126,7 @@ namespace PlayModeTest
             };
             
             //Act
-            mapGenComp.NewGameSettings(generalInputs, mapInputs, noiseInputs);
+            mapGenComp.NewGameSettings(generalInputs, mapInputs, noiseInputs,regions);
             
             //Assert
             Debug.Log($"Expected : {mapSet_chunkSize} , Result : {mapGenComp.GetMapSettings().chunkSize}");
@@ -159,7 +159,7 @@ namespace PlayModeTest
             };
             
             //Act
-            mapGenComp.NewGameSettings(generalInputs, mapInputs, noiseInputs);
+            mapGenComp.NewGameSettings(generalInputs, mapInputs, noiseInputs,regions);
             
             //Assert
             Assert.AreEqual(noiseSet_octaves,mapGenComp.GetNoiseSettings().octaves);

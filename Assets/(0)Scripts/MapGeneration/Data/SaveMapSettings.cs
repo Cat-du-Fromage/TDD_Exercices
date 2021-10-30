@@ -28,6 +28,8 @@ namespace KaizerWaldCode.MapGeneration.Data
         public uint seed;
         public string saveName;
 
+        public AnimationCurve meshHeightCurve;
+
         //CONSTRUCTOR
         //==============================================================================================================
         public SaveMapSettings(GeneralSettingsInputs gInputs = default, MapSettingsInputs mInputs = default, NoiseSettingsInputs nInputs = default)
@@ -43,6 +45,7 @@ namespace KaizerWaldCode.MapGeneration.Data
             lacunarity = nInputs.lacunarity;
             heightMultiplier = nInputs.heightMultiplier;
             offset = nInputs.offset;
+            meshHeightCurve = mInputs.meshHeightCurve;
         }
         
         public SaveMapSettings(GeneralMapSettings gInputs, MapSettings mInputs, NoiseSettings nInputs)

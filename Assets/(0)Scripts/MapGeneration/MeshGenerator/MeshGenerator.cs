@@ -43,13 +43,7 @@ namespace KaizerWaldCode.MapGeneration
         private static float3[] GetVertices(MapSettings mapSettings, JobHandle dependency = default)
         {
             using NativeArray<float3> verticesTemp = AllocNtvAry<float3>(mapSettings.totalMapPoints);
-            VerticesPosJob job = new VerticesPosJob
-            {
-                JSize = mapSettings.mapSize,
-                JPointPerAxis = mapSettings.mapPointPerAxis,
-                JSpacing = mapSettings.pointSpacing,
-                JVertices = verticesTemp,
-            };
+            VerticesPosJob job = new VerticesPosJob(in mapSettings, verticesTemp);
             JobHandle jobHandle = job.ScheduleParallel(mapSettings.totalMapPoints, JobsUtility.JobWorkerCount - 1, dependency);
             jobHandle.Complete();
             return verticesTemp.ToArray();
@@ -58,11 +52,7 @@ namespace KaizerWaldCode.MapGeneration
         private static float2[] GetUvs(MapSettings mapSettings, JobHandle dependency = default)
         {
             using NativeArray<float2> uvsTemp = AllocNtvAry<float2>(mapSettings.totalMapPoints);
-            UvsJob job = new UvsJob
-            {
-                JMapPointPerAxis = mapSettings.mapPointPerAxis,
-                JUvs = uvsTemp
-            };
+            UvsJob job = new UvsJob(in mapSettings, uvsTemp);
             JobHandle jobHandle = job.ScheduleParallel(mapSettings.totalMapPoints, JobsUtility.JobWorkerCount - 1, dependency);
             jobHandle.Complete();
             return uvsTemp.ToArray();
@@ -72,11 +62,7 @@ namespace KaizerWaldCode.MapGeneration
         {
             int trianglesBufferSize = sq(mapSettings.mapPointPerAxis - 1) * 6;
             using NativeArray<int> trianglesTemp = AllocNtvAry<int>(trianglesBufferSize);
-            TrianglesJob job = new TrianglesJob
-            {
-                JMapPointPerAxis = mapSettings.mapPointPerAxis,
-                JTriangles = trianglesTemp
-            };
+            TrianglesJob job = new TrianglesJob(in mapSettings, trianglesTemp);
             JobHandle jobHandle = job.ScheduleParallel(sq(mapSettings.mapPointPerAxis-1), JobsUtility.JobWorkerCount - 1, dependency);
             jobHandle.Complete();
             return trianglesTemp.ToArray();
@@ -85,15 +71,21 @@ namespace KaizerWaldCode.MapGeneration
         private static float3[] ApplyNoise(GeneralMapSettings gMapSettings, MapSettings mapSettings, NoiseSettings noiseSettings)
         {
             using NativeArray<float> noiseTemp = ArrayToNativeArray<float>(Noise.GetNoiseMap(gMapSettings,mapSettings,noiseSettings));
-            using NativeArray<float3> verticesTemp = ArrayToNativeArray<float3>(GetVertices(mapSettings));
-            ApplyNoiseJob job = new ApplyNoiseJob
-            {
-                JNoise = noiseTemp,
-                JVertices = verticesTemp
-            };
+            NativeArray<float3> verticesTemp = ArrayToNativeArray<float3>(GetVertices(mapSettings));
+            ApplyNoiseJob job = new ApplyNoiseJob(in noiseSettings, noiseTemp, verticesTemp);
             JobHandle jobHandle = job.ScheduleParallel(mapSettings.totalMapPoints, JobsUtility.JobWorkerCount - 1, default);
             jobHandle.Complete();
-            return verticesTemp.ToArray();
+            
+            for (int i = 0; i < verticesTemp.Length; i++)
+            {
+                verticesTemp[i] = 
+                    new float3(verticesTemp[i].x, mapSettings.meshHeightCurve.Evaluate(verticesTemp[i].y) * noiseSettings.heightMultiplier, verticesTemp[i].z);
+            }
+            float3[] array = verticesTemp.ToArray();
+            
+            verticesTemp.Dispose();
+            return array;
+            
         }
         
     }

@@ -9,7 +9,6 @@ using Unity.Jobs;
 using Unity.Jobs.LowLevel.Unsafe;
 using Unity.Mathematics;
 using UnityEngine;
-using UnityEngine.Experimental.Playables;
 using UnityEngine.Rendering;
 
 using static Unity.Mathematics.math;
@@ -28,12 +27,18 @@ namespace KaizerWaldCode.MapGeneration
     [BurstCompile(CompileSynchronously = true)]
     public struct VerticesPosJob : IJobFor
     {
-        [ReadOnly] public int JSize;
-        [ReadOnly] public int JPointPerAxis;
-        [ReadOnly] public float JSpacing;
-
+        [ReadOnly] private int JPointPerAxis;
+        [ReadOnly] private float JSpacing;
         [NativeDisableParallelForRestriction]
-        [WriteOnly] public NativeArray<float3> JVertices;
+        [WriteOnly] private NativeArray<float3> JVertices;
+
+        public VerticesPosJob(in MapSettings mapSettings, NativeArray<float3> vertices)
+        {
+            JPointPerAxis = mapSettings.mapPointPerAxis;
+            JSpacing = mapSettings.pointSpacing;
+            JVertices = vertices;
+        }
+        
         public void Execute(int index)
         {
             int z = (int)floor(index / (float)JPointPerAxis);
@@ -49,8 +54,15 @@ namespace KaizerWaldCode.MapGeneration
     [BurstCompile(CompileSynchronously = true)]
     public struct UvsJob : IJobFor
     {
-        [ReadOnly] public int JMapPointPerAxis;
-        [NativeDisableParallelForRestriction] [WriteOnly] public NativeArray<float2> JUvs;
+        [ReadOnly] private int JMapPointPerAxis;
+        [NativeDisableParallelForRestriction] [WriteOnly] private NativeArray<float2> JUvs;
+
+        public UvsJob(in MapSettings mapSettings, NativeArray<float2> uvs)
+        {
+            JMapPointPerAxis = mapSettings.mapPointPerAxis;
+            JUvs = uvs;
+        }
+        
         public void Execute(int index)
         {
             float z = floor((float)index / JMapPointPerAxis);
@@ -64,10 +76,16 @@ namespace KaizerWaldCode.MapGeneration
     [BurstCompile(CompileSynchronously = true)]
     public struct TrianglesJob : IJobFor
     {
-        [ReadOnly] public int JMapPointPerAxis;
-        
+        [ReadOnly] private int JMapPointPerAxis;
         [NativeDisableParallelForRestriction]
-        [WriteOnly] public NativeArray<int> JTriangles;
+        [WriteOnly] private NativeArray<int> JTriangles;
+
+        public TrianglesJob(in MapSettings mapSettings, NativeArray<int> triangles)
+        {
+            JMapPointPerAxis = mapSettings.mapPointPerAxis;
+            JTriangles = triangles;
+        }
+        
         public void Execute(int index)
         {
             int mapPoints = JMapPointPerAxis - 1;
@@ -91,14 +109,23 @@ namespace KaizerWaldCode.MapGeneration
     
     //APPLY NOISE
     //==================================================================================================================
-    [BurstCompile(CompileSynchronously = true)]
+    //[BurstCompile(CompileSynchronously = true)]
     public struct ApplyNoiseJob : IJobFor
     {
-        [ReadOnly] public NativeArray<float> JNoise;
-        [NativeDisableParallelForRestriction] public NativeArray<float3> JVertices;
+        [ReadOnly] private float JHeightMultiplier;
+        [ReadOnly] private NativeArray<float> JNoise;
+        [NativeDisableParallelForRestriction] private NativeArray<float3> JVertices;
+
+        public ApplyNoiseJob(in NoiseSettings noiseSettings, in NativeArray<float> noiseMap, NativeArray<float3> vertices)
+        {
+            JHeightMultiplier = noiseSettings.heightMultiplier;
+            JNoise = noiseMap;
+            JVertices = vertices;
+        }
+        
         public void Execute(int index)
         {
-            float3 noisePos = float3(JVertices[index].x,JNoise[index], JVertices[index].z);
+            float3 noisePos = float3(JVertices[index].x, JNoise[index], JVertices[index].z);
             JVertices[index] = noisePos;
         }
     }

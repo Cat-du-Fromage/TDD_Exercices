@@ -26,18 +26,20 @@ namespace KaizerWaldCode.UI.MainMenu
         public Button SettingsButton;
         public Button QuitButton;
         
-        [SerializeField]private NoiseSettingsInputs noiseInputs;
-        [SerializeField]private MapSettingsInputs mapInputs;
-        [SerializeField]private GeneralSettingsInputs generalInputs;
+        public NoiseSettingsInputs noiseInputs;
+        public MapSettingsInputs mapInputs;
+        public GeneralSettingsInputs generalInputs;
+
+        public TerrainType[] regions;
         void OnEnable()
         {
             root = GetComponent<UIDocument>().rootVisualElement;
             
-            NewGameButton = InitButton(in root,"newGame-button", OnClickNewGame);
+            NewGameButton  = InitButton(in root,"newGame-button", OnClickNewGame);
             ContinueButton = InitButton(in root,"continue-button", OnClickContinue, SubFoldersExist());
             LoadGameButton = InitButton(in root,"loadGame-button");
             SettingsButton = InitButton(in root,"settings-button");
-            QuitButton = InitButton(in root,"quit-button", OnQuit);
+            QuitButton     = InitButton(in root,"quit-button", OnQuit);
         }
         
         private bool SubFoldersExist() => MainSaveDirectory.Instance.GetNumSubfolders() > 0;
@@ -71,7 +73,7 @@ namespace KaizerWaldCode.UI.MainMenu
                 GameObject mapGen = GameObject.FindObjectOfType<MapGenerator>().gameObject;
                 MapGenerator mapGenData = mapGen.GetComponent<MapGenerator>();
 
-                mapGenData.NewGameSettings(generalInputs, mapInputs, noiseInputs);
+                mapGenData.NewGameSettings(generalInputs, mapInputs, noiseInputs, regions);
             };
         }
 

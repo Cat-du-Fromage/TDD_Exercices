@@ -36,12 +36,13 @@ namespace KaizerWaldCode.MapGeneration
         public GeneralMapSettings GetGeneralMapSettings() => generalMapSettings;
         public NoiseSettings GetNoiseSettings() => noiseSettings;
         
-        public void NewGameSettings(GeneralSettingsInputs generalInputs, MapSettingsInputs mapInputs, NoiseSettingsInputs noiseInputs)
+        public void NewGameSettings(GeneralSettingsInputs generalInputs, MapSettingsInputs mapInputs, NoiseSettingsInputs noiseInputs, TerrainType[] regions)
         {
             generalMapSettings.NewGame(generalInputs);
             mapSettings.NewGame(mapInputs);
             noiseSettings.NewGame(noiseInputs);
             SetPositionToZero();
+            meshRenderer.sharedMaterial.mainTexture = TextureGenerator.TextureFromHeightMap(mapSettings, regions,Noise.GetNoiseMap(generalMapSettings, mapSettings, noiseSettings));
             SetMesh();
             SaveSettings(generalMapSettings, mapSettings, noiseSettings);
         }

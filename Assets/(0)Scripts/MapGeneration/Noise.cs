@@ -34,22 +34,27 @@ namespace KaizerWaldCode.MapGeneration
             
             PerlinNoiseJob perlinNoiseJ = new PerlinNoiseJob(mapSettings.mapPointPerAxis, noiseSettings, noiseOffsetsMap, perlinNoiseMap);
             JobHandle perlinNoiseJH = perlinNoiseJ.ScheduleParallel(mapSettings.totalMapPoints,JobsUtility.JobWorkerCount - 1, offsetsJH);
-            perlinNoiseJH.Complete();
             
+            //FALLOFF
+            //==========================================================================================================
+            FallOffJob fallOffJob = new FallOffJob(mapSettings.mapPointPerAxis, perlinNoiseMap);
+            JobHandle fallOffJH = fallOffJob.ScheduleParallel(mapSettings.totalMapPoints,JobsUtility.JobWorkerCount - 1, perlinNoiseJH);
+            fallOffJH.Complete();
+
             return perlinNoiseMap.ToArray();
         }
         
-        //==============================================================================================================
-        // JOB SYSTEM
-        //==============================================================================================================
+//======================================================================================================================
+// JOB SYSTEM
+//======================================================================================================================
         
         // RANDOM OFFSETS
         //==============================================================================================================
         [BurstCompile(CompileSynchronously = true)]
         private struct OffsetNoiseRandomJob : IJobFor
         {
-            [ReadOnly] private uint                 JSeed;
-            [ReadOnly] private float2               JOffset;
+            [ReadOnly] private uint JSeed;
+            [ReadOnly] private float2 JOffset;
             [NativeDisableParallelForRestriction]
             [WriteOnly] private NativeArray<float2> JOctavesOffset;
 
@@ -74,14 +79,14 @@ namespace KaizerWaldCode.MapGeneration
         [BurstCompile(CompileSynchronously = true)]
         private struct PerlinNoiseJob : IJobFor
         {
-            [ReadOnly] private int                 JNumPointPerAxis;
-            [ReadOnly] private int                 JOctaves;
-            [ReadOnly] private float               JLacunarity;
-            [ReadOnly] private float               JPersistence;
-            [ReadOnly] private float               JScale;
-            [ReadOnly] private float               JHeightMul;
+            [ReadOnly] private int JNumPointPerAxis;
+            [ReadOnly] private int JOctaves;
+            [ReadOnly] private float JLacunarity;
+            [ReadOnly] private float JPersistence;
+            [ReadOnly] private float JScale;
+            [ReadOnly] private float JHeightMul;
             [ReadOnly] private NativeArray<float2> JOctOffsetArray;
-        
+
             [NativeDisableParallelForRestriction]
             [WriteOnly] private NativeArray<float> JNoiseMap;
 
@@ -110,18 +115,61 @@ namespace KaizerWaldCode.MapGeneration
                 //Not needed in parallel! it's a layering of noise so it must be done contigiously
                 for (int i = 0; i < JOctaves; i++)
                 {
-                    float sampleX = mul((x - halfMapSize + JOctOffsetArray[i].x) / JScale, frequency);
-                    float sampleY = mul((z - halfMapSize + JOctOffsetArray[i].y) / JScale, frequency);
-                    float2 sampleXY = float2(sampleX, sampleY);
-
-                    float pNoiseValue = snoise(sampleXY);
+                    GetSimplexNoise(in i, in x, in z, in halfMapSize, in frequency, out float pNoiseValue);
+                    
                     noiseHeight = mad(pNoiseValue, amplitude, noiseHeight);
                     amplitude = mul(amplitude, JPersistence);
                     frequency = mul(frequency, JLacunarity);
                 }
-                float noiseVal = noiseHeight;
-                noiseVal = abs(noiseVal);
-                JNoiseMap[index] = mul(noiseVal, max(1,JHeightMul));
+                
+                noiseHeight = (noiseHeight+1) * 0.5f;
+                JNoiseMap[index] = noiseHeight;
+            }
+
+            private void GetSimplexNoise(in int i, in int x, in int z, in float halfMapSize, in float frequency, out float pNoiseValue)
+            {
+                float sampleX = mul((x - halfMapSize + JOctOffsetArray[i].x) / JScale, frequency);
+                float sampleY = mul((z - halfMapSize + JOctOffsetArray[i].y) / JScale, frequency);
+                float2 sampleXY = float2(sampleX, sampleY);
+                pNoiseValue = snoise(sampleXY);
+            }
+        }
+        
+        // FALLOFF
+        //==============================================================================================================
+        [BurstCompile(CompileSynchronously = true)]
+        private struct FallOffJob : IJobFor
+        {
+            [ReadOnly] private int JNumPoint;
+            [NativeDisableParallelForRestriction]
+            private NativeArray<float> JNoiseMap;
+
+            public FallOffJob(int numPoint, NativeArray<float> noiseMap)
+            {
+                JNumPoint = numPoint;
+                JNoiseMap = noiseMap;
+            }
+            
+            public void Execute(int index)
+            {
+                float z = floor((float)index / JNumPoint);
+                float x = index - (z * JNumPoint);
+                
+                float row = mad(z / JNumPoint, 2, -1);
+                float indexInRow = mad(x / JNumPoint, 2, -1);
+                
+                float value = max(abs(row), abs(indexInRow));
+                //JNoiseMap[index] -= Evaluate(value);
+                
+                JNoiseMap[index] = clamp((JNoiseMap[index] - Evaluate(value)), 0, 1);
+            }
+            
+            private float Evaluate(float value) 
+            {
+                float a = 3f;
+                float b = 2.2f;
+                
+                return pow(value, a) / ( pow(value, a) + pow(b - b * value, a) );
             }
         }
     }

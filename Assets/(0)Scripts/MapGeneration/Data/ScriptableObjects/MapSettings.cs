@@ -20,6 +20,8 @@ namespace KaizerWaldCode.MapGeneration.Data
         public int totalChunkPoints;
         public int totalMapPoints;
 
+        public AnimationCurve meshHeightCurve;
+
         private void OnValidate()
         {
             CheckValues();
@@ -31,6 +33,7 @@ namespace KaizerWaldCode.MapGeneration.Data
             chunkSize = mapInputs.chunkSize;
             numChunk = mapInputs.numChunk;
             pointPerMeter = mapInputs.pointPerMeter;
+            meshHeightCurve = mapInputs.meshHeightCurve;
             CheckValues();
             CalculateProperties();
         }
@@ -49,7 +52,7 @@ namespace KaizerWaldCode.MapGeneration.Data
         {
             chunkSize = math.max(1,chunkSize);
             numChunk = math.max(1,numChunk);
-            pointPerMeter = math.max(2,pointPerMeter);
+            pointPerMeter = math.clamp(pointPerMeter,2,10);
         }
     }
 }

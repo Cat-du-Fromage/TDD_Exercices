@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace KaizerWaldCode.MapGeneration.Data
@@ -25,6 +26,14 @@ namespace KaizerWaldCode.MapGeneration.Data
         //==============================================================================================================
         public static readonly GeneralSettingsInputs Default = 
             new GeneralSettingsInputs("DefaultSaveName", 1);
+        
+        //CHECK VALUES
+        //==============================================================================================================
+        public void CheckValues()
+        {
+            seed = math.max(1,seed);
+            saveName = saveName == string.Empty ? "DefaultSaveName" : saveName;
+        }
 
         //IMPLICIT CONVERSION FROM SAVE-MAP-SETTINGS
         //==============================================================================================================
