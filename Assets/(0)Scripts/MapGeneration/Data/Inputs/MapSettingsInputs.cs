@@ -46,6 +46,7 @@ namespace KaizerWaldCode.MapGeneration.Data
                 chunkSize = data.chunkSize,
                 numChunk = data.numChunk,
                 pointPerMeter = data.pointPerMeter,
+                meshHeightCurve = data.meshHeightCurve,
             };
         }
     }

@@ -1,7 +1,9 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using KaizerWaldCode.MapGeneration;
 using KaizerWaldCode.UI.MainMenu;
+using Unity.Mathematics;
 using UnityEditor;
 using UnityEngine;
 

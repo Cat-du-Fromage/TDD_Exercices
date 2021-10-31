@@ -21,14 +21,17 @@ namespace KaizerWaldCode.MapGeneration
 {
     public static class MeshGenerator
     {
-        public static Mesh GetTerrainMesh(GeneralMapSettings gMapSettings, MapSettings mapSettings, NoiseSettings noiseSettings)
+        public static Mesh GetTerrainMesh(GeneralMapSettings gMapSettings, MapSettings mapSettings, NoiseSettings noiseSettings, bool applyNoise = true)
         {
             Mesh mesh = new Mesh()
             {
                 indexFormat = IndexFormat.UInt32,
                 name = "MapTerrain"
             };
-            mesh.SetVertices(ReinterpretArray<float3, Vector3>(ApplyNoise(gMapSettings, mapSettings, noiseSettings)));
+            mesh.SetVertices(applyNoise
+                ? ReinterpretArray<float3, Vector3>(EvaluateVertices(gMapSettings, mapSettings, noiseSettings))
+                : ReinterpretArray<float3, Vector3>(GetVertices(mapSettings)));
+
             mesh.SetTriangles(GetTriangles(mapSettings),0);
             mesh.SetUVs(0, ReinterpretArray<float2, Vector2>(GetUvs(mapSettings)));
             mesh.RecalculateBounds();
@@ -68,25 +71,25 @@ namespace KaizerWaldCode.MapGeneration
             return trianglesTemp.ToArray();
         }
         
-        private static float3[] ApplyNoise(GeneralMapSettings gMapSettings, MapSettings mapSettings, NoiseSettings noiseSettings)
+        private static float3[] GetNoise(GeneralMapSettings gMapSettings, MapSettings mapSettings, NoiseSettings noiseSettings)
         {
             using NativeArray<float> noiseTemp = ArrayToNativeArray<float>(Noise.GetNoiseMap(gMapSettings,mapSettings,noiseSettings));
-            NativeArray<float3> verticesTemp = ArrayToNativeArray<float3>(GetVertices(mapSettings));
+            using NativeArray<float3> verticesTemp = ArrayToNativeArray<float3>(GetVertices(mapSettings));
             ApplyNoiseJob job = new ApplyNoiseJob(in noiseSettings, noiseTemp, verticesTemp);
             JobHandle jobHandle = job.ScheduleParallel(mapSettings.totalMapPoints, JobsUtility.JobWorkerCount - 1, default);
             jobHandle.Complete();
-            
-            for (int i = 0; i < verticesTemp.Length; i++)
-            {
-                verticesTemp[i] = 
-                    new float3(verticesTemp[i].x, mapSettings.meshHeightCurve.Evaluate(verticesTemp[i].y) * noiseSettings.heightMultiplier, verticesTemp[i].z);
-            }
-            float3[] array = verticesTemp.ToArray();
-            
-            verticesTemp.Dispose();
-            return array;
-            
+
+            return verticesTemp.ToArray();
         }
-        
+
+        private static float3[] EvaluateVertices(GeneralMapSettings gMapSettings, MapSettings mapSettings, NoiseSettings noiseSettings)
+        {
+            float3[] vertices = GetNoise(gMapSettings, mapSettings, noiseSettings);
+            for (int i = 0; i < vertices.Length; i++)
+            {
+                vertices[i] = new float3(vertices[i].x, mapSettings.meshHeightCurve.Evaluate(vertices[i].y) * noiseSettings.heightMultiplier, vertices[i].z);
+            }
+            return vertices;
+        }
     }
 }

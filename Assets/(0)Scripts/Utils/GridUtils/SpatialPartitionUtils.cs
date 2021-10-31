@@ -8,7 +8,7 @@ using UnityEngine;
 using static Unity.Mathematics.math;
 using static KaizerWaldCode.Utils.NativeCollectionUtils;
 
-namespace KaizerWaldCode.Utils.GridUtils
+namespace KaizerWaldCode.Utils
 {
     public static class SpatialPartitionUtils
     {

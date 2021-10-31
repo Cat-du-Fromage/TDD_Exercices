@@ -1,11 +1,12 @@
 using System;
+using KaizerWaldCode.MapGeneration.Data.Interface;
 using Unity.Mathematics;
 using UnityEngine;
 
 namespace KaizerWaldCode.MapGeneration.Data
 {
     [CreateAssetMenu(fileName = "MapData", menuName = "MapGeneration/MapSettings")]
-    public class MapSettings : ScriptableObject
+    public class MapSettings : ScriptableObject, ISettings<MapSettingsInputs>
     {
         //Inputs
         public int chunkSize = 10;
@@ -48,11 +49,12 @@ namespace KaizerWaldCode.MapGeneration.Data
             totalMapPoints = mapPointPerAxis * mapPointPerAxis;
         }
 
-        private void CheckValues()
+        public void CheckValues()
         {
             chunkSize = math.max(1,chunkSize);
             numChunk = math.max(1,numChunk);
             pointPerMeter = math.clamp(pointPerMeter,2,10);
+            meshHeightCurve ??= AnimationCurve.Constant(0,1,1);
         }
     }
 }

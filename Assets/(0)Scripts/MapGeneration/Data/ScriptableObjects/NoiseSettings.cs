@@ -1,4 +1,5 @@
 using System;
+using KaizerWaldCode.MapGeneration.Data.Interface;
 using Unity.Mathematics;
 using UnityEngine;
 using static Unity.Mathematics.float2;
@@ -6,7 +7,7 @@ using static Unity.Mathematics.float2;
 namespace KaizerWaldCode.MapGeneration.Data
 {
     [CreateAssetMenu(fileName = "NoiseData", menuName = "MapGeneration/NoiseSettings")]
-    public class NoiseSettings : ScriptableObject
+    public class NoiseSettings : ScriptableObject, ISettings<NoiseSettingsInputs>
     {
         //FIELDS
         //==============================================================================================================
@@ -34,7 +35,7 @@ namespace KaizerWaldCode.MapGeneration.Data
         
         //CHECK VALUES
         //==============================================================================================================
-        private void CheckValues()
+        public void CheckValues()
         {
             octaves = math.max(1,octaves);
             scale = math.max(0.001f,scale);

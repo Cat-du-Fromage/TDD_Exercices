@@ -30,7 +30,7 @@ namespace KaizerWaldCode.MapGeneration.Data
         //DEFAULT VALUE
         //==============================================================================================================
         public static readonly NoiseSettingsInputs Default = 
-            new NoiseSettingsInputs(4, 20f, 0.5f, 2f, 2f, float2.zero);
+            new NoiseSettingsInputs(4, 100f, 0.5f, 2f, 2f, float2.zero);
 
         //CHECK VALUES
         //==============================================================================================================

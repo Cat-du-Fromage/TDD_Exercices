@@ -1,13 +1,14 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using KaizerWaldCode.MapGeneration.Data.Interface;
 using Unity.Mathematics;
 using UnityEngine;
 
 namespace KaizerWaldCode.MapGeneration.Data
 {
     [CreateAssetMenu(fileName = "GeneralMapData", menuName = "MapGeneration/GeneralMapSettings")]
-    public class GeneralMapSettings : ScriptableObject
+    public class GeneralMapSettings : ScriptableObject, ISettings<GeneralSettingsInputs>
     {
         //FIELDS
         //==============================================================================================================
@@ -25,7 +26,7 @@ namespace KaizerWaldCode.MapGeneration.Data
         
         //CHECK VALUES
         //==============================================================================================================
-        private void CheckValues()
+        public void CheckValues()
         {
             seed = math.max(1,seed);
             saveName = saveName == string.Empty ? "DefaultSaveName" : saveName;

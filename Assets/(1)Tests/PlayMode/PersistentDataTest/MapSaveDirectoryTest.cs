@@ -42,6 +42,7 @@ namespace PlayModeTest
                 chunkSize = 1,
                 numChunk = 2,
                 pointPerMeter = 2,
+                meshHeightCurve = default,
             };
 
             noiseInputs = new NoiseSettingsInputs

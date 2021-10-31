@@ -61,6 +61,7 @@ namespace KaizerWaldCode.MapGeneration.Data
             lacunarity = nInputs.lacunarity;
             heightMultiplier = nInputs.heightMultiplier;
             offset = nInputs.offset;
+            meshHeightCurve = mInputs.meshHeightCurve;
         }
     }
 }
