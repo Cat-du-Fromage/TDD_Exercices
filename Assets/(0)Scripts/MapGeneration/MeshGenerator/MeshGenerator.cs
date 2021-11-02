@@ -43,7 +43,7 @@ namespace KaizerWaldCode.MapGeneration
         // GET DATA
         //=====================================================================
         
-        private static float3[] GetVertices(MapSettings mapSettings, JobHandle dependency = default)
+        public static float3[] GetVertices(MapSettings mapSettings, JobHandle dependency = default)
         {
             using NativeArray<float3> verticesTemp = AllocNtvAry<float3>(mapSettings.totalMapPoints);
             VerticesPosJob job = new VerticesPosJob(in mapSettings, verticesTemp);

@@ -126,14 +126,17 @@ namespace KaizerWaldCode.Utils
         /// <param name="cellRadius">radius on map settings</param>
         /// <returns>index of the cell</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int Get2DCellID(in float2 pointPos, in int numCellMap, in int cellSize)
+        public static int Get2DCellID(in float2 pointPos, in int numCellMap, in float cellSize)
         {
             int2 cellGrid = int2(numCellMap);
             for (int i = 0; i < numCellMap; i++)
             {
-                if (cellGrid.y == numCellMap) cellGrid.y = select(numCellMap, i, pointPos.y <= mad(i, cellSize, cellSize));
-                if (cellGrid.x == numCellMap) cellGrid.x = select(numCellMap, i, pointPos.x <= mad(i, cellSize, cellSize));
-                if (cellGrid.x != numCellMap && cellGrid.y != numCellMap) break;
+                if (cellGrid.y == numCellMap) 
+                    cellGrid.y = select(numCellMap, i, pointPos.y <= mad(i, cellSize, cellSize));
+                if (cellGrid.x == numCellMap) 
+                    cellGrid.x = select(numCellMap, i, pointPos.x <= mad(i, cellSize, cellSize));
+                if (cellGrid.x != numCellMap && cellGrid.y != numCellMap) 
+                    break;
             }
             return mad(cellGrid.y, numCellMap, cellGrid.x);
         }
@@ -146,14 +149,17 @@ namespace KaizerWaldCode.Utils
         /// <param name="cellRadius">radius on map settings</param>
         /// <returns>index of the cell</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int Get2DCellID(in float3 pointPos, in int numCellMap, in int cellSize)
+        public static int Get2DCellID(in float3 pointPos, in int numCellMap, in float cellSize)
         {
             int2 cellGrid = int2(numCellMap);
             for (int i = 0; i < numCellMap; i++)
             {
-                if (cellGrid.y == numCellMap) cellGrid.y = select(numCellMap, i, pointPos.z <= mad(i, cellSize, cellSize));
-                if (cellGrid.x == numCellMap) cellGrid.x = select(numCellMap, i, pointPos.x <= mad(i, cellSize, cellSize));
-                if (cellGrid.x != numCellMap && cellGrid.y != numCellMap) break;
+                if (cellGrid.y == numCellMap) 
+                    cellGrid.y = select(numCellMap, i, pointPos.z <= mad(i, cellSize, cellSize));
+                if (cellGrid.x == numCellMap) 
+                    cellGrid.x = select(numCellMap, i, pointPos.x <= mad(i, cellSize, cellSize));
+                if (cellGrid.x != numCellMap && cellGrid.y != numCellMap) 
+                    break;
             }
             return mad(cellGrid.y, numCellMap, cellGrid.x);
         }
@@ -192,8 +198,10 @@ namespace KaizerWaldCode.Utils
             int y = (int)floor((float)cellId / numCellGrid);
             int x = cellId - (y * numCellGrid);
 
-            bool corner = (x == 0 && y == 0) || (x == 0 && y == numCellGrid - 1) ||
-                          (x == numCellGrid - 1 && y == 0) || (x == numCellGrid - 1 && y == numCellGrid - 1);
+            bool corner = (x == 0 && y == 0) 
+                          || (x == 0 && y == numCellGrid - 1) 
+                          || (x == numCellGrid - 1 && y == 0) 
+                          || (x == numCellGrid - 1 && y == numCellGrid - 1);
             bool yOnEdge = y == 0 || y == numCellGrid - 1;
             bool xOnEdge = x == 0 || x == numCellGrid - 1;
 
@@ -208,8 +216,10 @@ namespace KaizerWaldCode.Utils
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsCellOnCorner(int x, int y, int numCellGrid)
         {
-            return (x == 0 && y == 0) || (x == 0 && y == numCellGrid - 1) ||
-                   (x == numCellGrid - 1 && y == 0) || (x == numCellGrid - 1 && y == numCellGrid - 1);
+            return (x == 0 && y == 0) 
+                   || (x == 0 && y == numCellGrid - 1) 
+                   || (x == numCellGrid - 1 && y == 0) 
+                   || (x == numCellGrid - 1 && y == numCellGrid - 1);
         }
         
         /// <summary>
