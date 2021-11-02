@@ -27,7 +27,8 @@ namespace KaizerWaldCode.MapGeneration
 
             using NativeArray<float3> samplesPosition = AllocNtvAry<float3>(samplesSettings.totalNumCells);
 
-            RandomPointsJob job = new RandomPointsJob(gSettings, mSettings, samplesSettings, samplesPosition, bounds);
+            Random prng = Random.CreateFromIndex(gSettings.seed);
+            RandomPointsJob job = new RandomPointsJob(gSettings, mSettings, samplesSettings, samplesPosition, bounds, prng);
             JobHandle jobHandle = job.ScheduleParallel(samplesSettings.totalNumCells, JobsUtility.JobWorkerCount - 1, default);
             jobHandle.Complete();
             
@@ -47,7 +48,14 @@ namespace KaizerWaldCode.MapGeneration
             
             int mapSize = mSettings.mapSize;
             uint seed = gSettings.seed;
+            Random islandRandom = Random.CreateFromIndex(seed);
+            TestIslandCoast(samplesId, points, mapSize, islandRandom);
             
+            return samplesId;
+        }
+
+        static void TestIslandCoast(int[] samplesId, Vector3[] samplesPos, int mapSize, Random islandRandom)
+        {
             for (int i = 0; i < samplesPos.Length; i++)
             {
                 //samplesId[i] = RedBlobImplementation(123, samplesPos[i].xz, mSettings.mapSize) ? 1 : 0;
@@ -61,8 +69,6 @@ namespace KaizerWaldCode.MapGeneration
                 float z = 2f * ((samplesPos[i].z + midSize) / mapSize - 0.5f);
 
                 float3 point = new float3(x, 0, z);
-                //float3 point = samplesPos[i];
-                Random islandRandom = Random.CreateFromIndex(seed);
                 
                 VisualDebug.BeginFrame("Point Location", true);
                 VisualDebug.SetColour(Colours.lightRed, Colours.veryDarkGrey);
@@ -73,9 +79,9 @@ namespace KaizerWaldCode.MapGeneration
                 float dipAngle = islandRandom.NextFloat(PI2);
                 float dipWidth = islandRandom.NextFloat(0.2f, 0.7f); // = mapSize?
 
-                float angle = atan2(point.z, point.x);
+                float angle = atan2(point.z, point.x); // angle XZ
                 const float lengthMul = 0.5f; // 0.1f : big island 1.0f = small island // by increasing by 0.1 island size is reduced by 1
-                float totalLength = lengthMul * max(abs(point.x), abs(point.z)) + length(point);
+                float totalLength = lengthMul * max(abs(point.x), abs(point.z)) + length(point); //(Mid Value from max component)
                 
                 VisualDebug.BeginFrame("totalLength", true);
                 VisualDebug.DrawText(point + up(), $"Length {totalLength}");
@@ -84,38 +90,37 @@ namespace KaizerWaldCode.MapGeneration
                 float radialsBase = mad(bumps, angle, startAngle); // bump(1-6) * angle(0.x) + startangle(0.x)
                 float r1Sin = sin(radialsBase + cos((bumps + 3) * angle));
                 float r2Sin = sin(radialsBase + sin((bumps + 2) * angle));
-
-                const float factor = 50f;
+                
                 //VisualDebug.DrawText(point + up()*3, $"radialsBase {radialsBase}"); // Same
-                //r1Sin *= factor;
-                //r2Sin *= factor;
-                    
+
                 VisualDebug.DrawLineSegment(point, point* r1Sin);
                 VisualDebug.DrawLineSegment(point, point* r2Sin);
                 
                 VisualDebug.DrawText(point + up()*1.5f, $"r1Sin {r1Sin}");
                 VisualDebug.DrawText(point + up()*2f, $"r2Sin {r2Sin}");
-            
-                //r1 = 0.5f // r2 = 0.7f
-                float radial1 = 0.5f/**factor*/ + 0.4f * r1Sin;
-                float radial2 = 0.7f/**factor*/ - 0.2f * r2Sin;
+                
+                float radial1 = 0.5f + 0.4f * r1Sin;
+                float radial2 = 0.7f - 0.2f * r2Sin;
                 VisualDebug.DrawText(point + up()*3, $"dipWidth {dipWidth}");
+                
+                //Not needed but improve generation
 
-                if (abs(angle - dipAngle) < dipWidth || abs(angle - dipAngle + PI2) < dipWidth || abs(angle - dipAngle - PI2) < dipWidth)
+                if (   abs(angle - dipAngle) < dipWidth 
+                    || abs(angle - dipAngle + PI2) < dipWidth 
+                    || abs(angle - dipAngle - PI2) < dipWidth)
                 {
-                    radial1 = radial2 = 0.2f/**factor*/;
+                    radial1 = radial2 = 0.2f;
+                    Debug.Log($"Is concerned {samplesPos[i]} where dipWidth = {dipWidth}");
                 }
-                
-                //radial1 *= 100/2f;
-                //radial2 *= 100/2f;
-                
+
                 VisualDebug.DrawText(point + right()*1.5f, $"radial1 {radial1}");
                 VisualDebug.DrawText(point + right()*2f + up(), $"radial2 {radial2}");
                 
                 VisualDebug.DrawLineSegment(point, point* radial1);
                 VisualDebug.DrawLineSegment(point, point* radial2);
 
-                samplesId[i] = totalLength < radial1 || (totalLength > radial1 * ISLAND_FACTOR && totalLength < radial2) ? 1 : 0;
+                samplesId[i] = totalLength < radial1 
+                               || (totalLength > radial1 * ISLAND_FACTOR && totalLength < radial2) ? 1 : 0;
                 
                 if (samplesId[i] == 1)
                 {
@@ -129,7 +134,6 @@ namespace KaizerWaldCode.MapGeneration
             }
 
             VisualDebug.Save();
-            return samplesId;
         }
         
         static bool RedBlobImplementation(uint seed, float2 sampleDisc, int mapSize)
@@ -177,29 +181,27 @@ namespace KaizerWaldCode.MapGeneration
     [BurstCompile(CompileSynchronously = true)]
     public struct RandomPointsJob : IJobFor
     {
+        [ReadOnly] private Random jPrng;
         [ReadOnly] private int jSize;
         [ReadOnly] private float jCellSize;
         [ReadOnly] private int jNumCellPerAxis;
-        [ReadOnly] private uint jSeed;
 
         [ReadOnly] private NativeArray<Bounds> jBounds;
 
         [NativeDisableParallelForRestriction]
         [WriteOnly] private NativeArray<float3> jRandomPointsPosition;
 
-        public RandomPointsJob(GeneralMapSettings gSettings, MapSettings mSettings, SamplesSettings sSettings, NativeArray<float3> cellPos, NativeArray<Bounds> bounds)
+        public RandomPointsJob(GeneralMapSettings gSettings, MapSettings mSettings, SamplesSettings sSettings, NativeArray<float3> cellPos, NativeArray<Bounds> bounds, Random prng)
         {
+            jPrng = prng;
             jSize = mSettings.mapSize;
             jCellSize = sSettings.cellSize;
             jNumCellPerAxis = sSettings.numCellPerAxis;
-            jSeed = gSettings.seed;
             jRandomPointsPosition = cellPos;
             jBounds = bounds;
         }
         public void Execute(int index)
         {
-            Random prng = Random.CreateFromIndex(jSeed + (uint)index);
-            
             float cellRadius = jCellSize * 0.5f; //also jBounds[index].extents.x / z
             float midMapSize = jSize * -0.5f;
            
@@ -207,8 +209,8 @@ namespace KaizerWaldCode.MapGeneration
             float2 cellCenter = float3(jBounds[index].center).xz + float2(midMapSize);
             
             //Process Random
-            float2 randDirection = prng.NextFloat2Direction();
-            float2 sample = mad(randDirection, prng.NextFloat(0 , cellRadius), cellCenter);
+            float2 randDirection = jPrng.NextFloat2Direction();
+            float2 sample = mad(randDirection, jPrng.NextFloat(0 , cellRadius), cellCenter);
             
             jRandomPointsPosition[index] = float3(sample.x, 0, sample.y);
         }
@@ -230,6 +232,7 @@ namespace KaizerWaldCode.MapGeneration
     [BurstCompile(CompileSynchronously = true)]
     public struct IslandCoastJob : IJobFor
     {
+        [ReadOnly] private Random jPrng;
         [ReadOnly] private int jMapSize;
         [ReadOnly] private uint jSeed;
 
@@ -239,7 +242,7 @@ namespace KaizerWaldCode.MapGeneration
 
         public void Execute(int index)
         {
-            Random islandRandom = Random.CreateFromIndex(jSeed);
+            //Random islandRandom = Random.CreateFromIndex(jSeed);
             
             float ISLAND_FACTOR = 1.27f; // 1.0 means no small islands; 2.0 leads to a lot
             float PI2 = PI*2;
@@ -250,15 +253,21 @@ namespace KaizerWaldCode.MapGeneration
             float z = 2f * (sampleDisc.z / jMapSize - 0.5f);
             float3 point = new float3(x, 0, z);
 
-            int bumps = islandRandom.NextInt(1, 6);
-            float startAngle = islandRandom.NextFloat(PI2); //radians 2 Pi = 360°
-            float dipAngle = islandRandom.NextFloat(PI2);
-            float dipWidth = islandRandom.NextFloat(0.2f, 0.7f); // = mapSize?
-
+            //randoms
+            //==========================================================================================================
+            int bumps = jPrng.NextInt(1, 6);
+            float startAngle = jPrng.NextFloat(PI2); //radians 2 Pi = 360°
+            float dipAngle = jPrng.NextFloat(PI2);
+            float dipWidth = jPrng.NextFloat(0.2f, 0.7f); // = mapSize?
+            
+            //Length multiplier
+            //==========================================================================================================
             float angle = atan2(point.z, point.x); //more like : where am i on the circle
             float lengthMul = 0.5f; // 0.1f : big island 1.0f = small island // by increasing by 0.1 island size is reduced by 1
             float totalLength = mad(lengthMul, max(abs(point.x), abs(point.z)), length(point));
             
+            //Radials
+            //==========================================================================================================
             float radialsBase = mad(bumps, angle, startAngle); // bump(1-6) * angle(0.x) + startangle(0.x)
             float r1Sin = sin(radialsBase + cos((bumps + 3) * angle));
             float r2Sin = sin(radialsBase + sin((bumps + 2) * angle));
