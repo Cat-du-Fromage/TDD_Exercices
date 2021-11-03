@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using KaizerWaldCode.MapGeneration.Data;
 using KaizerWaldCode.Utils;
 using Unity.Burst;
@@ -26,7 +27,6 @@ namespace KaizerWaldCode.MapGeneration
             Debug.Log($"num samples : {samplesSettings.numCellPerAxis}");
             Debug.Log($"samples Size : {samplesSettings.cellSize}");
             using NativeArray<Bounds> bounds = GetCellsBounds(mSettings.mapSize, numCellPerAxis);
-
             using NativeArray<float3> samplesPosition = AllocNtvAry<float3>(samplesSettings.totalNumCells);
             
             RandomPointsJob job = new RandomPointsJob(gSettings, mSettings, samplesSettings, samplesPosition, bounds);
@@ -47,18 +47,36 @@ namespace KaizerWaldCode.MapGeneration
             JobHandle jobHandle = islandCoastJob.ScheduleParallel(samplesPos.Length, JobsUtility.JobWorkerCount - 1, default);
             jobHandle.Complete();
             
-            return samplesNtvArr.ToArray();
+            HashSet<int> test = new HashSet<int>(samplesNtvArr.ToArray());
+            test.Remove(-1);
+            
+            return test.ToArray();
         }
-
+        
         //VERTICES CELL ID
+        //==============================================================================================================
+        public static int[] GetCellsIdVertices(SamplesSettings sSettings, float3[] verticesPos, float3[] samplesPos)
+        {
+            using NativeArray<float3> verticesPosition = ArrayToNativeArray(verticesPos);
+            using NativeArray<float3> samplesPosition = ArrayToNativeArray(samplesPos);
+            using NativeArray<int> verticesCellsId = AllocNtvAry<int>(verticesPos.Length);
+            
+            VerticesCellIdJob job = new VerticesCellIdJob(sSettings, verticesPosition, verticesCellsId);
+            JobHandle jobHandle = job.ScheduleParallel(verticesPos.Length, JobsUtility.JobWorkerCount - 1, default);
+            jobHandle.Complete();
+            
+            return verticesCellsId.ToArray();
+        }
+        //VERTICES CLOSEST CELL ID
         //==============================================================================================================
         public static int[] GetCellsClosestVertices(SamplesSettings sSettings, float3[] verticesPos, float3[] samplesPos)
         {
             using NativeArray<float3> verticesPosition = ArrayToNativeArray(verticesPos);
             using NativeArray<float3> samplesPosition = ArrayToNativeArray(samplesPos);
             using NativeArray<int> verticesCellsId = AllocNtvAry<int>(verticesPos.Length);
-
+            
             VerticesClosestCellIdJob job = new VerticesClosestCellIdJob(sSettings, verticesPosition, samplesPosition, verticesCellsId);
+            
             JobHandle jobHandle = job.ScheduleParallel(verticesPos.Length, JobsUtility.JobWorkerCount - 1, default);
             jobHandle.Complete();
 
@@ -67,27 +85,31 @@ namespace KaizerWaldCode.MapGeneration
 
         public static Texture2D SetTextureOnIsland(MapSettings mapSettings, int[] verticesCellId, int[] islandId)
         {
-            List<int> islandPoints = new List<int>();
-            for (int i = 0; i < islandId.Length; i++)
+            NativeArray<Color> colorMap = AllocNtvAry<Color>(verticesCellId.Length);
+            bool found = false;
+            Color PrevColor = Color.blue;
+            int prevId = -1;
+            for (int i = 0; i < verticesCellId.Length; i++)
             {
-                if (islandId[i] != 0)
+                if (verticesCellId[i] == prevId)
                 {
-                    islandPoints.Add(islandId[i]);
+                    colorMap[i] = PrevColor;
+                    //Debug.Log($"got a prev : {verticesCellId[i]}");
+                    continue;
                 }
-            }
 
-            NativeArray<Color> colorMap = AllocNtvAry<Color>(mapSettings.totalMapPoints);
+                for (int j = 0; j < islandId.Length; j++)
+                {
+                    if (islandId[j] == verticesCellId[i])
+                    {
+                        found = true;
+                    }
+                }
 
-            bool found;
-            for (int i = 0; i < mapSettings.totalMapPoints; i++)
-            {
+                colorMap[i] = found == true ? Color.green : Color.blue;
                 found = false;
-                foreach (int id in islandPoints)
-                {
-                    if (verticesCellId[i] != id) continue;
-                    found = true;
-                }
-                colorMap[i] = found ? Color.green : Color.blue;
+                PrevColor = colorMap[i];
+                prevId = verticesCellId[i];
             }
             
             Texture2D tex = TextureGenerator.TextureFromColourMap(colorMap.ToArray(), mapSettings.mapPointPerAxis, mapSettings.mapPointPerAxis);
@@ -117,8 +139,8 @@ namespace KaizerWaldCode.MapGeneration
         
         public void Execute(int index)
         {
-            int cellId = KwGrid.Get2DCellID(jVertices[index].xz, jNumCellMap, jCellSize);
-            
+            //int cellId = KwGrid.Get2DCellID(jVertices[index].xz, jNumCellMap, jCellSize);
+            int cellId = GetCell(index, jVertices[index], jNumCellMap, jCellSize);
             (int numCell, int2 xRange, int2 yRange) = KwGrid.CellGridRanges(in cellId, jNumCellMap);
             
             //Check Cells around
@@ -131,7 +153,6 @@ namespace KaizerWaldCode.MapGeneration
                 {
                     int indexCellOffset = cellId + mad(y, jNumCellMap, x);
                     cellsIndex[cellCount] = indexCellOffset;
-                    if (index == 0) Debug.Log($"Id = {indexCellOffset} Num Cell : {numCell}");
                     cellCount++;
                 }
             }
@@ -141,24 +162,87 @@ namespace KaizerWaldCode.MapGeneration
             for (int i = 0; i < numCell; i++)
             {
                 distances[i] = distancesq(jVertices[index].xz, jSamplesPos[cellsIndex[i]].xz);
-                if (index == 0)
-                {
-                    Debug.Log($"Pos samples = {jSamplesPos[cellsIndex[i]].xz}");
-                    Debug.Log($"dst from = {cellsIndex[i]} distance cell : {distances[i]}");
-                }
-                    
             }
             //Get the nearest
-            int nearstSample = KwGrid.IndexMin(distances, cellsIndex);
-            if (index == 0)
+            int nearestSample = KwGrid.IndexMin(distances, cellsIndex);
+            jVerticesCellId[index] = nearestSample;
+        }
+        
+        private int GetCell(int index ,float3 pointPos, in int numCellMap, in float cellSize)
+        {
+            float offset = abs(jVertices[0].x);
+            int2 cellGrid = int2(numCellMap);
+            for (int i = 0; i < numCellMap; i++)
             {
-                Debug.Log($"Id = {index} nearest cell : {nearstSample}");
-                Debug.Log($"Position at = {index} Pos : {jVertices[index]}");
+                float cellComparer = mad(i, cellSize, cellSize);
+                if (cellGrid.y == numCellMap)
+                    cellGrid.y = select(numCellMap, i, pointPos.z + offset <= cellComparer);
+                if (cellGrid.x == numCellMap) 
+                    cellGrid.x = select(numCellMap, i, pointPos.x + offset <= cellComparer);
+                if (cellGrid.x != numCellMap && cellGrid.y != numCellMap) 
+                    break;
             }
-            jVerticesCellId[index] = nearstSample;
+            return mad(cellGrid.y, numCellMap, cellGrid.x);
         }
     }
-    
+
+    [BurstCompile(CompileSynchronously = true)]
+    public struct VerticesCellIdJob : IJobFor
+    {
+        [ReadOnly] private int jNumCellMap;
+        [ReadOnly] private float jCellSize;
+        [ReadOnly] private NativeArray<float3> jVertices;
+        [NativeDisableParallelForRestriction]
+        [WriteOnly]private NativeArray<int> jVerticesCellId;
+
+        public VerticesCellIdJob(SamplesSettings sSettings, NativeArray<float3> vertices, NativeArray<int> verticesCellId)
+        {
+            jNumCellMap = sSettings.numCellPerAxis;
+            jCellSize = sSettings.cellSize;
+            jVertices = vertices;
+            jVerticesCellId = verticesCellId;
+        }
+
+        public void Execute(int index)
+        {
+            int2 cellGrid = int2(jNumCellMap);
+            /*
+            for (int i = 0; i < jNumCellMap; i++)
+            {
+                float cellComparer = mad(i, jCellSize, jCellSize);
+                if (cellGrid.y == jNumCellMap)
+                    cellGrid.y = select(jNumCellMap, i, jVertices[index].z <= cellComparer);
+                if (cellGrid.x == jNumCellMap)
+                    cellGrid.x = select(jNumCellMap, i, jVertices[index].x <= cellComparer);
+                if (cellGrid.x != jNumCellMap && cellGrid.y != jNumCellMap) 
+                    break;
+            }
+            */
+            float offset = abs(jVertices[index].z);
+            if (index == 0)
+            {
+                //Debug.Log($"NumCellPerAxis = {jNumCellMap}; CellSize = {jCellSize}");
+            }
+            for (int yG = 0; yG < jNumCellMap; yG++)
+            {
+                if (jVertices[index].z + offset <= math.mad(yG, jCellSize, jCellSize))
+                {
+                    cellGrid.y = yG;
+                    break;
+                }
+            }
+            for (int xG = 0; xG < jNumCellMap; xG++)
+            {
+                if (jVertices[index].x + offset <= math.mad(xG, jCellSize, jCellSize))
+                {
+                    cellGrid.x = xG;
+                    break;
+                }
+            }
+            jVerticesCellId[index] = mad(cellGrid.y, jNumCellMap, cellGrid.x);
+        }
+    }
+
     [BurstCompile(CompileSynchronously = true)]
     public struct RandomPointsJob : IJobFor
     {
@@ -181,7 +265,7 @@ namespace KaizerWaldCode.MapGeneration
         }
         public void Execute(int index)
         {
-            Random rng = Random.CreateFromIndex(jSeed*(uint)index);
+            Random rng = Random.CreateFromIndex((uint)mad(jSeed ,jBounds.Length , index));
             
             float cellRadius = jCellSize * 0.5f; //also jBounds[index].extents.x / z
             float midMapSize = jSize * -0.5f;
@@ -196,7 +280,7 @@ namespace KaizerWaldCode.MapGeneration
             jRandomPointsPosition[index] = float3(sample.x, 0, sample.y);
         }
     }
-    
+
     [BurstCompile(CompileSynchronously = true)]
     public struct IslandCoastJob : IJobFor
     {
@@ -217,9 +301,9 @@ namespace KaizerWaldCode.MapGeneration
 
         public void Execute(int index)
         {
-            Random islandRandom = Random.CreateFromIndex(jSeed*(uint)index);
+            Random islandRandom = Random.CreateFromIndex((uint)mad(jSeed ,jSamplesPosition.Length , index));
             
-            const float ISLAND_FACTOR = 1.27f; // 1.0 means no small islands; 2.0 leads to a lot
+            const float ISLAND_FACTOR = 1.07f; // 1.0 means no small islands; 2.0 leads to a lot
             const float PI2 = PI * 2f;
             
             float midSize = jMapSize * 0.5f; // need to be added because calculated on the center of the map(mapSize)
@@ -259,7 +343,7 @@ namespace KaizerWaldCode.MapGeneration
                 radial1 = radial2 = 0.2f;
             }
 
-            jIslandSamplesID[index] = select(0,index,totalLength < radial1 || (totalLength > radial1 * ISLAND_FACTOR && totalLength < radial2));
+            jIslandSamplesID[index] = select(-1,index,totalLength < radial1 || (totalLength > radial1 * ISLAND_FACTOR && totalLength < radial2));
         }
     }
 }

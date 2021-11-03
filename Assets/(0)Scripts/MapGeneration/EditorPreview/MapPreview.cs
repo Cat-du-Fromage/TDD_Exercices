@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using KaizerWaldCode.MapGeneration.Data;
 using KaizerWaldCode.UI.MainMenu;
 using KaizerWaldCode.Utils;
@@ -45,6 +46,7 @@ namespace KaizerWaldCode.MapGeneration.EditorPreview
         public float3[] samplePositions;
         public int[] islandId;
         private int[] verticesCellAssignment;
+        public int[] verticesCellId;
 
         private void OnValidate()
         {
@@ -68,12 +70,11 @@ namespace KaizerWaldCode.MapGeneration.EditorPreview
             else if (generationType == GenerationType.CoastLine)
             {
                 
-                
                 generalMapSettings.NewGame(gInputs);
                 mapSettings.NewGame(mInputs);
                 noiseSettings.NewGame(nInputs);
                 
-                int numCell = 10;
+                int numCell = 25;
                 SamplesSettings samplesSettings = new SamplesSettings(mapSettings, numCell);
                 
                 //SetPositionToZero();
@@ -86,6 +87,7 @@ namespace KaizerWaldCode.MapGeneration.EditorPreview
                 meshRenderer.sharedMaterial.mainTexture = IslandGenerator.SetTextureOnIsland(mapSettings, verticesCellAssignment, islandId);
                 /*MeshGenerator.GetVertices(mapSettings)*/
                 //meshRenderer.material.SetTextureOffset(meshRenderer.material.name,new Vector2(-mapSettings.mapSize/2f, -mapSettings.mapSize/2f));
+                //verticesCellId = IslandGenerator.GetCellsIdVertices(samplesSettings, ReinterpretArray<Vector3, float3>(meshFilter.sharedMesh.vertices), samplePositions);
             }
         }
 
@@ -125,7 +127,7 @@ namespace KaizerWaldCode.MapGeneration.EditorPreview
             {
                 for (int i = 0; i < samplePositions.Length; i++)
                 {
-                    Gizmos.color = islandId[i] == 0 ? Color.red : Color.green;
+                    Gizmos.color = islandId.Contains(i) ? Color.green : Color.red;
                     Gizmos.DrawSphere(samplePositions[i], 0.1f);
                 }
             }
