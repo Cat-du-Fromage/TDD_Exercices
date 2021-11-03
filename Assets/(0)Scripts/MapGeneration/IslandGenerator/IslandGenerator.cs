@@ -73,7 +73,6 @@ namespace KaizerWaldCode.MapGeneration
                 if (islandId[i] != 0)
                 {
                     islandPoints.Add(islandId[i]);
-                    Debug.Log("Added");
                 }
             }
 
@@ -90,7 +89,6 @@ namespace KaizerWaldCode.MapGeneration
                 }
                 colorMap[i] = found ? Color.green : Color.blue;
             }
-
             
             Texture2D tex = TextureGenerator.TextureFromColourMap(colorMap.ToArray(), mapSettings.mapPointPerAxis, mapSettings.mapPointPerAxis);
             colorMap.Dispose();
@@ -120,6 +118,7 @@ namespace KaizerWaldCode.MapGeneration
         public void Execute(int index)
         {
             int cellId = KwGrid.Get2DCellID(jVertices[index].xz, jNumCellMap, jCellSize);
+            
             (int numCell, int2 xRange, int2 yRange) = KwGrid.CellGridRanges(in cellId, jNumCellMap);
             
             //Check Cells around
@@ -132,6 +131,7 @@ namespace KaizerWaldCode.MapGeneration
                 {
                     int indexCellOffset = cellId + mad(y, jNumCellMap, x);
                     cellsIndex[cellCount] = indexCellOffset;
+                    if (index == 0) Debug.Log($"Id = {indexCellOffset} Num Cell : {numCell}");
                     cellCount++;
                 }
             }
@@ -140,10 +140,22 @@ namespace KaizerWaldCode.MapGeneration
             NativeArray<float> distances = new NativeArray<float>(numCell, Allocator.Temp, NativeArrayOptions.UninitializedMemory);
             for (int i = 0; i < numCell; i++)
             {
-                distances[i] = distancesq(jVertices[index], jSamplesPos[cellsIndex[i]]);
+                distances[i] = distancesq(jVertices[index].xz, jSamplesPos[cellsIndex[i]].xz);
+                if (index == 0)
+                {
+                    Debug.Log($"Pos samples = {jSamplesPos[cellsIndex[i]].xz}");
+                    Debug.Log($"dst from = {cellsIndex[i]} distance cell : {distances[i]}");
+                }
+                    
             }
             //Get the nearest
-            jVerticesCellId[index] = KwGrid.IndexMin(distances, cellsIndex);
+            int nearstSample = KwGrid.IndexMin(distances, cellsIndex);
+            if (index == 0)
+            {
+                Debug.Log($"Id = {index} nearest cell : {nearstSample}");
+                Debug.Log($"Position at = {index} Pos : {jVertices[index]}");
+            }
+            jVerticesCellId[index] = nearstSample;
         }
     }
     
@@ -213,8 +225,8 @@ namespace KaizerWaldCode.MapGeneration
             float midSize = jMapSize * 0.5f; // need to be added because calculated on the center of the map(mapSize)
             float3 sampleDisc = jSamplesPosition[index];
             
-            float x = 2f * ( (sampleDisc.x + midSize) / jMapSize - 0.5f );
-            float z = 2f * ( (sampleDisc.z + midSize) / jMapSize - 0.5f );
+            float x = 2f * ( (sampleDisc.x + midSize) / jMapSize - 0.5f ); // midSize offset still needed, mesh is not center to 0,0
+            float z = 2f * ( (sampleDisc.z + midSize) / jMapSize - 0.5f ); // ONLY Vertices ARE! (Same goes for random points btw)
             float3 point = float3(x, 0, z);
 
             //randoms

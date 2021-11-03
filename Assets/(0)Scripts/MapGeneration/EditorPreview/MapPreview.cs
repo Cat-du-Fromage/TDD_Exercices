@@ -42,7 +42,7 @@ namespace KaizerWaldCode.MapGeneration.EditorPreview
         public bool autoUpdate;
         public bool syncUI;
 
-        private float3[] samplePositions;
+        public float3[] samplePositions;
         public int[] islandId;
         private int[] verticesCellAssignment;
 
@@ -61,7 +61,7 @@ namespace KaizerWaldCode.MapGeneration.EditorPreview
                 generalMapSettings.NewGame(gInputs);
                 mapSettings.NewGame(mInputs);
                 noiseSettings.NewGame(nInputs);
-                SetPositionToZero();
+                //SetPositionToZero();
                 meshRenderer.sharedMaterial.mainTexture = TextureGenerator.TextureFromHeightMap(mapSettings, regions,Noise.GetNoiseMap(generalMapSettings, mapSettings, noiseSettings));
                 meshFilter.mesh = MeshGenerator.GetTerrainMesh(generalMapSettings, mapSettings, noiseSettings);
             }
@@ -76,15 +76,16 @@ namespace KaizerWaldCode.MapGeneration.EditorPreview
                 int numCell = 10;
                 SamplesSettings samplesSettings = new SamplesSettings(mapSettings, numCell);
                 
-                SetPositionToZero();
+                //SetPositionToZero();
                 //meshRenderer.sharedMaterial.mainTexture = TextureGenerator.TextureFromHeightMap(mapSettings, regions,Noise.GetNoiseMap(generalMapSettings, mapSettings, noiseSettings));
                 meshFilter.mesh = MeshGenerator.GetTerrainMesh(generalMapSettings, mapSettings, noiseSettings, false);
                 samplePositions = IslandGenerator.GenerateRandomPoints(generalMapSettings, mapSettings, samplesSettings.numCellPerAxis);
                 islandId = IslandGenerator.GetCoastLine(samplePositions, generalMapSettings, mapSettings);
                 CheckSamplesOutOfMap();
-                verticesCellAssignment = IslandGenerator.GetCellsClosestVertices(samplesSettings, MeshGenerator.GetVertices(mapSettings),samplePositions);
-                meshRenderer.sharedMaterial.mainTexture =
-                    IslandGenerator.SetTextureOnIsland(mapSettings, verticesCellAssignment, islandId);
+                verticesCellAssignment = IslandGenerator.GetCellsClosestVertices(samplesSettings,ReinterpretArray<Vector3, float3>(meshFilter.sharedMesh.vertices),samplePositions);
+                meshRenderer.sharedMaterial.mainTexture = IslandGenerator.SetTextureOnIsland(mapSettings, verticesCellAssignment, islandId);
+                /*MeshGenerator.GetVertices(mapSettings)*/
+                //meshRenderer.material.SetTextureOffset(meshRenderer.material.name,new Vector2(-mapSettings.mapSize/2f, -mapSettings.mapSize/2f));
             }
         }
 

@@ -27,25 +27,27 @@ namespace KaizerWaldCode.MapGeneration
     [BurstCompile(CompileSynchronously = true)]
     public struct VerticesPosJob : IJobFor
     {
-        [ReadOnly] private int JPointPerAxis;
-        [ReadOnly] private float JSpacing;
+        [ReadOnly] private int jMapSize;
+        [ReadOnly] private int jPointPerAxis;
+        [ReadOnly] private float jSpacing;
         [NativeDisableParallelForRestriction]
-        [WriteOnly] private NativeArray<float3> JVertices;
+        [WriteOnly] private NativeArray<float3> jVertices;
 
         public VerticesPosJob(in MapSettings mapSettings, NativeArray<float3> vertices)
         {
-            JPointPerAxis = mapSettings.mapPointPerAxis;
-            JSpacing = mapSettings.pointSpacing;
-            JVertices = vertices;
+            jMapSize = mapSettings.mapSize;
+            jPointPerAxis = mapSettings.mapPointPerAxis;
+            jSpacing = mapSettings.pointSpacing;
+            jVertices = vertices;
         }
         
         public void Execute(int index)
         {
-            int z = (int)floor(index / (float)JPointPerAxis);
-            int x = index - (z * JPointPerAxis);
+            int z = (int)floor(index / (float)jPointPerAxis);
+            int x = index - (z * jPointPerAxis);
             
-            float3 pointPosition = float3(x, 0, z) * float3(JSpacing);
-            JVertices[index] = pointPosition;
+            float3 pointPosition = float3(x, 0, z) * float3(jSpacing) + float3(jMapSize*-0.5f,0,jMapSize*-0.5f);
+            jVertices[index] = pointPosition;
         }
     }
     
