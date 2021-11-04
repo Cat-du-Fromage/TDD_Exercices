@@ -53,20 +53,6 @@ namespace KaizerWaldCode.MapGeneration
             return test.ToArray();
         }
         
-        //VERTICES CELL ID
-        //==============================================================================================================
-        public static int[] GetCellsIdVertices(SamplesSettings sSettings, float3[] verticesPos, float3[] samplesPos)
-        {
-            using NativeArray<float3> verticesPosition = ArrayToNativeArray(verticesPos);
-            using NativeArray<float3> samplesPosition = ArrayToNativeArray(samplesPos);
-            using NativeArray<int> verticesCellsId = AllocNtvAry<int>(verticesPos.Length);
-            
-            VerticesCellIdJob job = new VerticesCellIdJob(sSettings, verticesPosition, verticesCellsId);
-            JobHandle jobHandle = job.ScheduleParallel(verticesPos.Length, JobsUtility.JobWorkerCount - 1, default);
-            jobHandle.Complete();
-            
-            return verticesCellsId.ToArray();
-        }
         //VERTICES CLOSEST CELL ID
         //==============================================================================================================
         public static int[] GetCellsClosestVertices(SamplesSettings sSettings, float3[] verticesPos, float3[] samplesPos)
@@ -83,37 +69,18 @@ namespace KaizerWaldCode.MapGeneration
             return verticesCellsId.ToArray();
         }
 
+        //ISLAND TEXTURE (limited to 2 colors for now)
+        //==============================================================================================================
         public static Texture2D SetTextureOnIsland(MapSettings mapSettings, int[] verticesCellId, int[] islandId)
         {
-            NativeArray<Color> colorMap = AllocNtvAry<Color>(verticesCellId.Length);
-            bool found = false;
-            Color PrevColor = Color.blue;
-            int prevId = -1;
-            for (int i = 0; i < verticesCellId.Length; i++)
-            {
-                if (verticesCellId[i] == prevId)
-                {
-                    colorMap[i] = PrevColor;
-                    //Debug.Log($"got a prev : {verticesCellId[i]}");
-                    continue;
-                }
-
-                for (int j = 0; j < islandId.Length; j++)
-                {
-                    if (islandId[j] == verticesCellId[i])
-                    {
-                        found = true;
-                    }
-                }
-
-                colorMap[i] = found == true ? Color.green : Color.blue;
-                found = false;
-                PrevColor = colorMap[i];
-                prevId = verticesCellId[i];
-            }
+            using NativeArray<Color> colorsMap = AllocNtvAry<Color>(verticesCellId.Length);
+            using NativeArray<int> vCellIds = ArrayToNativeArray(verticesCellId);
+            using NativeArray<int> islandIds = ArrayToNativeArray(islandId);
             
-            Texture2D tex = TextureGenerator.TextureFromColourMap(colorMap.ToArray(), mapSettings.mapPointPerAxis, mapSettings.mapPointPerAxis);
-            colorMap.Dispose();
+            TextureIslandJob job = new TextureIslandJob(colorsMap, vCellIds, islandIds);
+            job.ScheduleParallel(verticesCellId.Length, JobsUtility.JobWorkerCount - 1, default).Complete();
+            
+            Texture2D tex = TextureGenerator.TextureFromColourMap(colorsMap.ToArray(), mapSettings.mapPointPerAxis, mapSettings.mapPointPerAxis);
             return tex;
         }
     }
@@ -139,8 +106,7 @@ namespace KaizerWaldCode.MapGeneration
         
         public void Execute(int index)
         {
-            //int cellId = KwGrid.Get2DCellID(jVertices[index].xz, jNumCellMap, jCellSize);
-            int cellId = GetCell(index, jVertices[index], jNumCellMap, jCellSize);
+            int cellId = KwGrid.Get2DCellID(jVertices[index], jNumCellMap, jCellSize, jVertices[0]);
             (int numCell, int2 xRange, int2 yRange) = KwGrid.CellGridRanges(in cellId, jNumCellMap);
             
             //Check Cells around
@@ -167,79 +133,33 @@ namespace KaizerWaldCode.MapGeneration
             int nearestSample = KwGrid.IndexMin(distances, cellsIndex);
             jVerticesCellId[index] = nearestSample;
         }
-        
-        private int GetCell(int index ,float3 pointPos, in int numCellMap, in float cellSize)
-        {
-            float offset = abs(jVertices[0].x);
-            int2 cellGrid = int2(numCellMap);
-            for (int i = 0; i < numCellMap; i++)
-            {
-                float cellComparer = mad(i, cellSize, cellSize);
-                if (cellGrid.y == numCellMap)
-                    cellGrid.y = select(numCellMap, i, pointPos.z + offset <= cellComparer);
-                if (cellGrid.x == numCellMap) 
-                    cellGrid.x = select(numCellMap, i, pointPos.x + offset <= cellComparer);
-                if (cellGrid.x != numCellMap && cellGrid.y != numCellMap) 
-                    break;
-            }
-            return mad(cellGrid.y, numCellMap, cellGrid.x);
-        }
     }
 
     [BurstCompile(CompileSynchronously = true)]
-    public struct VerticesCellIdJob : IJobFor
+    public struct TextureIslandJob : IJobFor
     {
-        [ReadOnly] private int jNumCellMap;
-        [ReadOnly] private float jCellSize;
-        [ReadOnly] private NativeArray<float3> jVertices;
+        [ReadOnly]private NativeArray<int> jIslandId;
+        [ReadOnly]private NativeArray<int> jVerticesCellId;
         [NativeDisableParallelForRestriction]
-        [WriteOnly]private NativeArray<int> jVerticesCellId;
+        [WriteOnly] private NativeArray<Color> jColors;
 
-        public VerticesCellIdJob(SamplesSettings sSettings, NativeArray<float3> vertices, NativeArray<int> verticesCellId)
+        public TextureIslandJob(NativeArray<Color> colors, NativeArray<int> verticesCellId, NativeArray<int> islandId)
         {
-            jNumCellMap = sSettings.numCellPerAxis;
-            jCellSize = sSettings.cellSize;
-            jVertices = vertices;
+            jColors = colors;
             jVerticesCellId = verticesCellId;
+            jIslandId = islandId;
         }
 
         public void Execute(int index)
         {
-            int2 cellGrid = int2(jNumCellMap);
-            /*
-            for (int i = 0; i < jNumCellMap; i++)
+            bool found = false;
+            for (int i = 0; i < jIslandId.Length; i++)
             {
-                float cellComparer = mad(i, jCellSize, jCellSize);
-                if (cellGrid.y == jNumCellMap)
-                    cellGrid.y = select(jNumCellMap, i, jVertices[index].z <= cellComparer);
-                if (cellGrid.x == jNumCellMap)
-                    cellGrid.x = select(jNumCellMap, i, jVertices[index].x <= cellComparer);
-                if (cellGrid.x != jNumCellMap && cellGrid.y != jNumCellMap) 
-                    break;
+                if (jIslandId[i] != jVerticesCellId[index]) continue;
+                found = true;
+                break;
             }
-            */
-            float offset = abs(jVertices[index].z);
-            if (index == 0)
-            {
-                //Debug.Log($"NumCellPerAxis = {jNumCellMap}; CellSize = {jCellSize}");
-            }
-            for (int yG = 0; yG < jNumCellMap; yG++)
-            {
-                if (jVertices[index].z + offset <= math.mad(yG, jCellSize, jCellSize))
-                {
-                    cellGrid.y = yG;
-                    break;
-                }
-            }
-            for (int xG = 0; xG < jNumCellMap; xG++)
-            {
-                if (jVertices[index].x + offset <= math.mad(xG, jCellSize, jCellSize))
-                {
-                    cellGrid.x = xG;
-                    break;
-                }
-            }
-            jVerticesCellId[index] = mad(cellGrid.y, jNumCellMap, cellGrid.x);
+            jColors[index] = found ? Color.green : Color.blue;
         }
     }
 

@@ -6,6 +6,7 @@ using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
 using static Unity.Mathematics.math;
+using float3 = Unity.Mathematics.float3;
 
 namespace KaizerWaldCode.Utils
 {
@@ -126,15 +127,16 @@ namespace KaizerWaldCode.Utils
         /// <param name="cellRadius">radius on map settings</param>
         /// <returns>index of the cell</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int Get2DCellID(in float2 pointPos, in int numCellMap, in float cellSize)
+        public static int Get2DCellID(in float2 pointPos, in int numCellMap, in float cellSize, float2 botLeftPoint = default)
         {
+            botLeftPoint = abs(botLeftPoint);
             int2 cellGrid = int2(numCellMap);
             for (int i = 0; i < numCellMap; i++)
             {
                 if (cellGrid.y == numCellMap) 
-                    cellGrid.y = select(numCellMap, i, pointPos.y <= mad(i, cellSize, cellSize));
+                    cellGrid.y = select(numCellMap, i, pointPos.y + botLeftPoint.y <= mad(i, cellSize, cellSize));
                 if (cellGrid.x == numCellMap) 
-                    cellGrid.x = select(numCellMap, i, pointPos.x <= mad(i, cellSize, cellSize));
+                    cellGrid.x = select(numCellMap, i, pointPos.x + botLeftPoint.x <= mad(i, cellSize, cellSize));
                 if (cellGrid.x != numCellMap && cellGrid.y != numCellMap) 
                     break;
             }
@@ -149,15 +151,16 @@ namespace KaizerWaldCode.Utils
         /// <param name="cellRadius">radius on map settings</param>
         /// <returns>index of the cell</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int Get2DCellID(in float3 pointPos, in int numCellMap, in float cellSize)
+        public static int Get2DCellID(in float3 pointPos, in int numCellMap, in float cellSize, float3 botLeftPoint = default)
         {
+            botLeftPoint = abs(botLeftPoint);
             int2 cellGrid = int2(numCellMap);
             for (int i = 0; i < numCellMap; i++)
             {
                 if (cellGrid.y == numCellMap) 
-                    cellGrid.y = select(numCellMap, i, pointPos.z <= mad(i, cellSize, cellSize));
+                    cellGrid.y = select(numCellMap, i, pointPos.z + botLeftPoint.z <= mad(i, cellSize, cellSize));
                 if (cellGrid.x == numCellMap) 
-                    cellGrid.x = select(numCellMap, i, pointPos.x <= mad(i, cellSize, cellSize));
+                    cellGrid.x = select(numCellMap, i, pointPos.x + botLeftPoint.x <= mad(i, cellSize, cellSize));
                 if (cellGrid.x != numCellMap && cellGrid.y != numCellMap) 
                     break;
             }

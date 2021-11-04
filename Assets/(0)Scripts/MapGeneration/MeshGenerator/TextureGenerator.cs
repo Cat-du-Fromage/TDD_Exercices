@@ -48,15 +48,15 @@ namespace KaizerWaldCode.MapGeneration
 
         private static (NativeArray<float>, NativeArray<Color>) GetArraysTerrains(TerrainType[] terrains)
         {
-            NativeArray<float> terrainHeigts = AllocNtvAry<float>(terrains.Length);
+            NativeArray<float> terrainHeights = AllocNtvAry<float>(terrains.Length);
             NativeArray<Color> terrainColor = AllocNtvAry<Color>(terrains.Length);
             for (int i = 0; i < terrains.Length; i++)
             {
-                terrainHeigts[i] = terrains[i].height;
+                terrainHeights[i] = terrains[i].height;
                 terrainColor[i] = terrains[i].colour;
             }
 
-            return (terrainHeigts, terrainColor);
+            return (terrainHeights, terrainColor);
         }
         
         // FALLOFF
