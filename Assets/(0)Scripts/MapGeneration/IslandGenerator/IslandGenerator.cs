@@ -159,7 +159,7 @@ namespace KaizerWaldCode.MapGeneration
                 found = true;
                 break;
             }
-            jColors[index] = found ? Color.green : Color.blue;
+            jColors[index] = found ? Color.green : Color.white;
         }
     }
 

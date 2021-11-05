@@ -26,7 +26,9 @@ namespace KaizerWaldCode.MapGeneration
             //While native array contains -1
 
             using NativeArray<int> layers = AllocNtvAry<int>(mapSettings.totalMapPoints);
-            
+            using NativeArray<int> islandLayers = AllocNtvAry<int>(mapSettings.totalMapPoints);
+            using NativeArray<int> islands = ArrayToNativeArray(islandIds); 
+
             for (int i = 0; i < jobHandles.Count; i++)
             {
                 if (i != 0)
@@ -34,14 +36,14 @@ namespace KaizerWaldCode.MapGeneration
                     if (isSchedule && currentJobHandle.IsCompleted)
                     {
                         isSchedule = false;
-                        IslandLayersJob job = new IslandLayersJob(i);
+                        IslandLayersJob job = new IslandLayersJob(i, islands, islandLayers);
                         jobHandles.Add(job.ScheduleParallel(mapSettings.totalMapPoints, JobsUtility.JobWorkerCount - 1, jobHandles[i-1]));
                         isSchedule = true;
                     }
                 }
                 else
                 {
-                    IslandLayersJob job = new IslandLayersJob(i);
+                    IslandLayersJob job = new IslandLayersJob(i, islands, islandLayers);
                     jobHandles.Add(job.ScheduleParallel(mapSettings.totalMapPoints, JobsUtility.JobWorkerCount - 1, default));
                     isSchedule = true;
                 }
@@ -55,18 +57,20 @@ namespace KaizerWaldCode.MapGeneration
         private struct IslandLayersJob : IJobFor
         {
             [ReadOnly] private int jLayer;
+            [ReadOnly] private NativeArray<int> jIslands;
+            [NativeDisableParallelForRestriction]
+            [WriteOnly] private NativeArray<int> jIslandLayers;
 
-            public IslandLayersJob(int layer)
+            public IslandLayersJob(int layer, NativeArray<int> islands, NativeArray<int> islandLayers)
             {
                 jLayer = layer;
+                jIslands = islands;
+                jIslandLayers = islandLayers;
             }
             
             public void Execute(int index)
             {
-                for (int i = 0; i < 100; i++)
-                {
-                    
-                }
+                
             }
         }
     }
