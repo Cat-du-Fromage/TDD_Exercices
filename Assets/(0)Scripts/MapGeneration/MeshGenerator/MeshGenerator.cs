@@ -29,11 +29,11 @@ namespace KaizerWaldCode.MapGeneration
                 name = "MapTerrain"
             };
             mesh.SetVertices(applyNoise
-                ? ReinterpretArray<float3, Vector3>(EvaluateVertices(gMapSettings, mapSettings, noiseSettings))
-                : ReinterpretArray<float3, Vector3>(GetVertices(mapSettings)));
+                ? EvaluateVertices(gMapSettings, mapSettings, noiseSettings).ReinterpretArray<float3, Vector3>()
+                : GetVertices(mapSettings).ReinterpretArray<float3, Vector3>());
 
             mesh.SetTriangles(GetTriangles(mapSettings),0);
-            mesh.SetUVs(0, ReinterpretArray<float2, Vector2>(GetUvs(mapSettings)));
+            mesh.SetUVs(0, GetUvs(mapSettings).ReinterpretArray<float2, Vector2>());
             mesh.RecalculateBounds();
             mesh.RecalculateNormals();
             return mesh;
@@ -73,8 +73,8 @@ namespace KaizerWaldCode.MapGeneration
         
         private static float3[] GetNoise(GeneralMapSettings gMapSettings, MapSettings mapSettings, NoiseSettings noiseSettings)
         {
-            using NativeArray<float> noiseTemp = ArrayToNativeArray<float>(Noise.GetNoiseMap(gMapSettings,mapSettings,noiseSettings));
-            using NativeArray<float3> verticesTemp = ArrayToNativeArray<float3>(GetVertices(mapSettings));
+            using NativeArray<float> noiseTemp = Noise.GetNoiseMap(gMapSettings,mapSettings,noiseSettings).ToNativeArray();
+            using NativeArray<float3> verticesTemp = GetVertices(mapSettings).ToNativeArray();
             ApplyNoiseJob job = new ApplyNoiseJob(in noiseSettings, noiseTemp, verticesTemp);
             JobHandle jobHandle = job.ScheduleParallel(mapSettings.totalMapPoints, JobsUtility.JobWorkerCount - 1, default);
             jobHandle.Complete();

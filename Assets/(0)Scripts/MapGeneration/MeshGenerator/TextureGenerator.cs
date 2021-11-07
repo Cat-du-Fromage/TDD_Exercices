@@ -33,7 +33,7 @@ namespace KaizerWaldCode.MapGeneration
             //====================================
             using NativeArray<Color> colorMap = AllocNtvAry<Color>(mapSettings.totalMapPoints);
             (NativeArray<float> terrainsHeights, NativeArray<Color> terrainsColor) = GetArraysTerrains(terrains);
-            using NativeArray<float> noiseMap = ArrayToNativeArray(heightMap);
+            using NativeArray<float> noiseMap = heightMap.ToNativeArray();
             
             Texture2DJob textureJob = new Texture2DJob(terrainsHeights,terrainsColor, noiseMap, colorMap);
             JobHandle jobHandle = textureJob.ScheduleParallel(mapSettings.totalMapPoints, JobsUtility.JobWorkerCount - 1, default);

@@ -41,7 +41,7 @@ namespace KaizerWaldCode.MapGeneration
         public static int[] GetCoastLine(float3[] samplesPos, GeneralMapSettings gSettings, MapSettings mSettings)
         {
             using NativeArray<int> samplesNtvArr = AllocNtvAry<int>(samplesPos.Length);
-            using NativeArray<float3> samplesPosition = ArrayToNativeArray(samplesPos);
+            using NativeArray<float3> samplesPosition = samplesPos.ToNativeArray();
             
             IslandCoastJob islandCoastJob = new IslandCoastJob(gSettings.seed, mSettings.mapSize, samplesPosition, samplesNtvArr);
             JobHandle jobHandle = islandCoastJob.ScheduleParallel(samplesPos.Length, JobsUtility.JobWorkerCount - 1, default);
@@ -57,8 +57,8 @@ namespace KaizerWaldCode.MapGeneration
         //==============================================================================================================
         public static int[] GetCellsClosestVertices(SamplesSettings sSettings, float3[] verticesPos, float3[] samplesPos)
         {
-            using NativeArray<float3> verticesPosition = ArrayToNativeArray(verticesPos);
-            using NativeArray<float3> samplesPosition = ArrayToNativeArray(samplesPos);
+            using NativeArray<float3> verticesPosition = verticesPos.ToNativeArray();
+            using NativeArray<float3> samplesPosition = samplesPos.ToNativeArray();
             using NativeArray<int> verticesCellsId = AllocNtvAry<int>(verticesPos.Length);
             
             VerticesClosestCellIdJob job = new VerticesClosestCellIdJob(sSettings, verticesPosition, samplesPosition, verticesCellsId);
@@ -74,8 +74,8 @@ namespace KaizerWaldCode.MapGeneration
         public static Texture2D SetTextureOnIsland(MapSettings mapSettings, int[] verticesCellId, int[] islandId)
         {
             using NativeArray<Color> colorsMap = AllocNtvAry<Color>(verticesCellId.Length);
-            using NativeArray<int> vCellIds = ArrayToNativeArray(verticesCellId);
-            using NativeArray<int> islandIds = ArrayToNativeArray(islandId);
+            using NativeArray<int> vCellIds = verticesCellId.ToNativeArray();
+            using NativeArray<int> islandIds = islandId.ToNativeArray();
             
             TextureIslandJob job = new TextureIslandJob(colorsMap, vCellIds, islandIds);
             job.ScheduleParallel(verticesCellId.Length, JobsUtility.JobWorkerCount - 1, default).Complete();

@@ -12,7 +12,7 @@ namespace KaizerWaldCode.Utils
 	/// <author>
 	/// Jackson Dunstan, https://jacksondunstan.com/articles/4713
 	/// </author>
-	public static class NativeArrayExtensions
+	public static class KwNativeArrayExtensions
 	{
 		/// <summary>
 		/// A faster version of <see cref="NativeArray{T}.CopyFrom(T[])"/>

@@ -5,48 +5,48 @@ using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
 using UnityEngine;
+using System.Runtime.CompilerServices;
 
 using static Unity.Collections.LowLevel.Unsafe.NativeArrayUnsafeUtility;
+using static KaizerWaldCode.Utils.KwManagedContainerUtils;
 
 namespace KaizerWaldCode.Utils
 {
     public static class NativeCollectionUtils
     {
-        public static void AllocNtvArray(ref NativeArray<float3> array, in int size)
+        public static void Create(this NativeArray<float3> array, in int size)
         {
             array = new NativeArray<float3>(size, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
         }
 
-        public static NativeArray<T> AllocNtvAry<T>(in int size, in Allocator a = Allocator.TempJob) where T : struct
+        public static NativeArray<T> AllocNtvAry<T>(in int size, in Allocator a = Allocator.TempJob) 
+            where T : struct
         {
-            return new NativeArray<T>(size, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
+            return new NativeArray<T>(size, a, NativeArrayOptions.UninitializedMemory);
         }
         
-        public static NativeArray<T> AllocNtvAryOption<T>(in int size, in NativeArrayOptions nao = NativeArrayOptions.UninitializedMemory) where T : struct
+        public static NativeArray<T> AllocNtvAryOpt<T>(in int size, in NativeArrayOptions nao = NativeArrayOptions.UninitializedMemory) 
+            where T : struct
         {
             return new NativeArray<T>(size, Allocator.TempJob, nao);
         }
 
-        public static NativeArray<T> AllocFillNtvAry<T>(in int size, in T val) where T : struct
+        public static NativeArray<T> AllocFillNtvAry<T>(in int size, in T val) 
+            where T : struct
         {
             NativeArray<T> a = new NativeArray<T>(size, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
             for (int i = 0; i < size; i++) { a[i] = val; }
             return a;
         }
-
-        public static NativeArray<T> ArrayToNativeArray<T>(in T[] array, in Allocator a = Allocator.TempJob , in NativeArrayOptions nao = NativeArrayOptions.UninitializedMemory) where T : struct
-        {
-            NativeArray<T> nA = new NativeArray<T>(array.Length, a, nao);
-            nA.CopyFrom(array);
-            return nA;
-        }
-
-        public static void Fill<T>(ref NativeArray<T> array, in int arrayLength, in T val) where T : struct
+        
+        public static void Fill<T>(this NativeArray<T> array, in int arrayLength, in T val)
+            where T : struct
         {
             for (int i = 0; i < arrayLength; i++) { array[i] = val; }
         }
         
-        public static int NumValueNotEqualTo<T>(in NativeArray<T> array, in T val) where T : struct
+        public static int NumValueNotEqualTo<T>(this NativeArray<T> array, in T val) 
+            where T : struct
         {
             int n = 0;
             for (int i = 0; i < array.Length; i++)
@@ -57,32 +57,36 @@ namespace KaizerWaldCode.Utils
             return n;
         }
         
-        public static T[] RemoveDuplicates<T>(T[] s) where T : struct
+        public static NativeArray<T> RemoveDuplicates<T>(this NativeArray<T> s, Allocator a = Allocator.TempJob, NativeArrayOptions nao = NativeArrayOptions.UninitializedMemory) 
+            where T : unmanaged
         {
-            HashSet<T> set = new HashSet<T>(s);
-            T[] result = new T[set.Count];
-            set.CopyTo(result);
-            return result;
-        }
-        
-        public static NativeArray<T> RemoveDuplicates<T>(in NativeArray<T> s, Allocator a = Allocator.TempJob, NativeArrayOptions nao = NativeArrayOptions.UninitializedMemory) 
-            where T : struct
-        {
-            Debug.Log($"base NativeArray length = {s.Length}");
-            HashSet<T> set = new HashSet<T>(s);
+            HashSet<T> set = new HashSet<T>(s.ToArray());
             NativeArray<T> result = new NativeArray<T>(set.Count, a, nao);
-            Debug.Log($"NEW NativeArray length = {set.Count}");
-            result.CopyFrom(s);
+            result.CopyFrom(set.ToArray());
             return result;
         }
 
-        public static U[] ReinterpretArray<T,U>(T[] array) 
+        public static U[] ReinterpretArray<T,U>(this T[] array) 
             where T : struct //from
             where U : struct //to
         {
             using NativeArray<T> temp = new NativeArray<T>(array.Length, Allocator.Temp, NativeArrayOptions.UninitializedMemory);
             temp.CopyFrom(array);
             return temp.Reinterpret<U>().ToArray();
+        }
+
+        /// <summary>
+        /// Conditional Add used in parallel Job system
+        /// </summary>
+        /// <param name="list"></param>
+        /// <param name="flag"></param>
+        /// <param name="obj"></param>
+        /// <typeparam name="T"></typeparam>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void AddNoResizeIf<T>(this NativeList<T>.ParallelWriter list, bool flag, T obj)
+            where T : unmanaged
+        {
+            if (flag) { list.AddNoResize(obj); }
         }
     }
 }

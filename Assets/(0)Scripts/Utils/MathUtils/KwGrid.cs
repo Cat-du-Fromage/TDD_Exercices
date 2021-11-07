@@ -178,7 +178,7 @@ namespace KaizerWaldCode.Utils
         public static int AdjCellFromIndex(AdjacentCell adjCell, in int index, in int2 pos, in int width) =>
         adjCell switch
         {
-            AdjacentCell.Left        when pos.x > 0                              => index + 1,
+            AdjacentCell.Left        when pos.x > 0                              => index - 1,
             AdjacentCell.Right       when pos.x < width - 1                      => index + 1,
             AdjacentCell.Top         when pos.y < width - 1                      => index + width,
             AdjacentCell.TopLeft     when pos.y < width - 1 && pos.x > 0         => (index + width) - 1,
@@ -186,7 +186,7 @@ namespace KaizerWaldCode.Utils
             AdjacentCell.Bottom      when pos.y > 0                              => index - width,
             AdjacentCell.BottomLeft  when pos.y > 0 && pos.x > 0                 => (index - width) - 1,
             AdjacentCell.BottomRight when pos.y > 0 && pos.x < width - 1         => (index - width) + 1,
-            _              => int.MaxValue,
+            _              => -1,
         };
         
         /// <summary>
@@ -225,16 +225,64 @@ namespace KaizerWaldCode.Utils
                    || (x == numCellGrid - 1 && y == numCellGrid - 1);
         }
         
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsCellOnCorner(int2 xy, int numCellGrid)
+        {
+            int x = xy.x;
+            int y = xy.y;
+            return (x == 0 && y == 0) 
+                   || (x == 0 && y == numCellGrid - 1) 
+                   || (x == numCellGrid - 1 && y == 0) 
+                   || (x == numCellGrid - 1 && y == numCellGrid - 1);
+        }
+        
         /// <summary>
         /// Get if a cell is on a chosen Edge (X or Y)
         /// </summary>
-        /// <param name="e">edge (X or Y) you want to check</param>
+        /// <param name="coord">coord (X or Y) you want to check</param>
         /// <param name="numCellGrid"></param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool IsCellOnEdge(int e, int numCellGrid)
+        public static bool IsCellOnEdge(int coord, int numCellGrid)
         {
-            return e == 0 || e == numCellGrid - 1;
+            return coord == 0 || coord == numCellGrid - 1;
+        }
+
+        /// <summary>
+        /// Get Left Index of a point in a grid
+        /// </summary>
+        /// <param name="coords">coordinate of the point to check from</param>
+        /// <param name="width">width of the grid</param>
+        /// <returns>index of the left point, -1 means point is on corner</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int GetLeftIndex(int2 coords, int width) => select(mad(coords.y, width, coords.x - 1),-1, coords.x == 0);
+        //{
+            //if (coords.x == 0) return -1;
+            //return mad(coords.y, width, coords.x) - 1;
+        //}
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int GetRightIndex(int2 coords, int width)
+        {
+            return select(mad(coords.y, width, coords.x) + 1,-1, coords.x == width - 1);
+            //if (coords.x == width - 1) return -1;
+            //return mad(coords.y, width, coords.x + 1);
+        }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int GetBottomIndex(int2 coords, int width)
+        {
+            return select(mad(coords.y, width, coords.x) - width,-1, coords.y == 0);
+            //if (coords.x == width - 1) return -1;
+            //return mad(coords.y, width, coords.x + 1);
+        }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int GetTopIndex(int2 coords, int width)
+        {
+            return select(mad(coords.y, width, coords.x) + width,-1, coords.y == width - 1);
+            //if (coords.x == width - 1) return -1;
+            //return mad(coords.y, width, coords.x + 1);
         }
     }
 }
