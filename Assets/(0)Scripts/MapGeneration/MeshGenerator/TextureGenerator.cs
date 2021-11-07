@@ -18,9 +18,11 @@ namespace KaizerWaldCode.MapGeneration
     {
         public static Texture2D TextureFromColourMap(Color[] colourMap, int width, int height)
         {
-            Texture2D texture = new Texture2D(width, height);
-            texture.filterMode = FilterMode.Point; //just fill the triangles / trillinear/Billinear = blend with surrounding cube
-            texture.wrapMode = TextureWrapMode.Clamp; // what happen when we go outside of the limits? (in this case stretch value continu as if it was part of the range)
+            Texture2D texture = new Texture2D(width, height)
+            {
+                filterMode = FilterMode.Point, //just fill the triangles / trillinear/Billinear = blend with surrounding cube
+                wrapMode = TextureWrapMode.Clamp // what happen when we go outside of the limits? (in this case stretch value continu as if it was part of the range)
+            };
             texture.SetPixels(colourMap);
             texture.Apply();
             return texture;
@@ -64,27 +66,27 @@ namespace KaizerWaldCode.MapGeneration
         [BurstCompile(CompileSynchronously = true)]
         private struct Texture2DJob : IJobFor
         {
-            [ReadOnly] private NativeArray<float> JTerrainsHeight;
-            [ReadOnly] private NativeArray<Color> JTerrainsColor;
-            [ReadOnly] private NativeArray<float> JNoiseMap;
+            [ReadOnly] private NativeArray<float> jTerrainsHeight;
+            [ReadOnly] private NativeArray<Color> jTerrainsColor;
+            [ReadOnly] private NativeArray<float> jNoiseMap;
             [NativeDisableParallelForRestriction]
-            [WriteOnly] private NativeArray<Color> JColorMap;
+            [WriteOnly] private NativeArray<Color> jColorMap;
 
             public Texture2DJob(NativeArray<float> terrainsHeight, NativeArray<Color> terrainsColor, NativeArray<float> noiseMap, NativeArray<Color> colorMap)
             {
-                JTerrainsHeight = terrainsHeight;
-                JTerrainsColor = terrainsColor;
-                JNoiseMap = noiseMap;
-                JColorMap = colorMap;
+                jTerrainsHeight = terrainsHeight;
+                jTerrainsColor = terrainsColor;
+                jNoiseMap = noiseMap;
+                jColorMap = colorMap;
             }
             
             public void Execute(int index)
             {
-                for(int i = 0; i < JTerrainsHeight.Length; i++)
+                for(int i = 0; i < jTerrainsHeight.Length; i++)
                 {
-                    if(JNoiseMap[index] <= JTerrainsHeight[i])
+                    if(jNoiseMap[index] <= jTerrainsHeight[i])
                     {
-                        JColorMap[index] = JTerrainsColor[i];
+                        jColorMap[index] = jTerrainsColor[i];
                         break;
                     }
                 }

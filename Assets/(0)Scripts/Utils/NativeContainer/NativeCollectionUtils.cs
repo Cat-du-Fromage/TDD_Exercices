@@ -14,11 +14,6 @@ namespace KaizerWaldCode.Utils
 {
     public static class NativeCollectionUtils
     {
-        public static void Create(this NativeArray<float3> array, in int size)
-        {
-            array = new NativeArray<float3>(size, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
-        }
-
         public static NativeArray<T> AllocNtvAry<T>(in int size, in Allocator a = Allocator.TempJob) 
             where T : struct
         {

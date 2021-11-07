@@ -40,7 +40,7 @@ namespace KaizerWaldCode.Utils
 		/// </exception>
 		[Il2CppSetOption(Option.NullChecks, false)]
 		[Il2CppSetOption(Option.ArrayBoundsChecks, false)]
-		public unsafe static void CopyFromFast<T>(
+		public static unsafe void CopyFromFast<T>(
 			this NativeArray<T> nativeArray,
 			T[] array)
 			where T : struct
@@ -89,7 +89,8 @@ namespace KaizerWaldCode.Utils
 		/// </exception>
 		[Il2CppSetOption(Option.NullChecks, false)]
 		[Il2CppSetOption(Option.ArrayBoundsChecks, false)]
-		public unsafe static void CopyToFast<T>(this NativeArray<T> nativeArray, T[] array) where T : struct
+		public static unsafe void CopyToFast<T>(this NativeArray<T> nativeArray, T[] array) 
+			where T : struct
 		{
 			if (array == null)
 			{
@@ -116,7 +117,8 @@ namespace KaizerWaldCode.Utils
 		/// <param name="allocator"></param>
 		/// <typeparam name="T"></typeparam>
 		/// <returns></returns>
-		public unsafe static NativeArray<T> ManagedToUnmanaged<T>(T[] arr, Allocator allocator) where T : unmanaged
+		public static unsafe NativeArray<T> ManagedToUnmanaged<T>(T[] arr, Allocator allocator) 
+			where T : unmanaged
 		{
 			fixed ( T* p = arr )
 			{

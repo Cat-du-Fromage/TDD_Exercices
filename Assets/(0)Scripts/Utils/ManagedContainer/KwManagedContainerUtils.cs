@@ -20,12 +20,28 @@ namespace KaizerWaldCode.Utils
             return nA;
         }
         
+        /// <summary>
+        /// Convert HashSet To Array
+        /// </summary>
+        /// <param name="hashSet"></param>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
         public static T[] ToArray<T>(this HashSet<T> hashSet)
             where T : unmanaged
         {
             T[] arr = new T[hashSet.Count];
             hashSet.CopyTo(arr);
             return arr;
+        }
+        
+        public static NativeArray<T> ToNativeArray<T>(this HashSet<T> hashSet)
+            where T : unmanaged
+        {
+            T[] arr = new T[hashSet.Count];
+            hashSet.CopyTo(arr);
+            NativeArray<T> ntvAry = new NativeArray<T>(hashSet.Count, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
+            ntvAry.CopyFrom(arr);
+            return ntvAry;
         }
         
         public static T[] RemoveDuplicates<T>(this T[] s) 

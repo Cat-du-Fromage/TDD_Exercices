@@ -46,7 +46,7 @@ namespace KaizerWaldCode.MapGeneration.EditorPreview
         public float3[] samplePositions;
         public int[] islandId;
         private int[] verticesCellAssignment;
-        public int[] verticesCellId;
+        //public int[] verticesCellId;
 
         private void OnValidate()
         {
@@ -78,14 +78,13 @@ namespace KaizerWaldCode.MapGeneration.EditorPreview
                 SamplesSettings samplesSettings = new SamplesSettings(mapSettings, numCell);
                 
                 //SetPositionToZero();
-                //meshRenderer.sharedMaterial.mainTexture = TextureGenerator.TextureFromHeightMap(mapSettings, regions,Noise.GetNoiseMap(generalMapSettings, mapSettings, noiseSettings));
                 meshFilter.mesh = MeshGenerator.GetTerrainMesh(generalMapSettings, mapSettings, noiseSettings, false);
                 samplePositions = IslandGenerator.GenerateRandomPoints(generalMapSettings, mapSettings, samplesSettings.numCellPerAxis);
                 islandId = IslandGenerator.GetCoastLine(samplePositions, generalMapSettings, mapSettings);
                 CheckSamplesOutOfMap();
                 verticesCellAssignment = IslandGenerator.GetCellsClosestVertices(samplesSettings, meshFilter.sharedMesh.vertices.ReinterpretArray<Vector3, float3>(),samplePositions);
                 meshRenderer.sharedMaterial.mainTexture = IslandGenerator.SetTextureOnIsland(mapSettings, verticesCellAssignment, islandId);
-                IslandMeshGenerator.GetIslandLayers(mapSettings, islandId, verticesCellAssignment, meshFilter.sharedMesh.vertices);
+                IslandMeshGenerator.GetIslandDstLayers(mapSettings, islandId, verticesCellAssignment, meshFilter.sharedMesh.vertices);
             }
         }
 

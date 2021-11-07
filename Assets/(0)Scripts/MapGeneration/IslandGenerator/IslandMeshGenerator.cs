@@ -1,6 +1,5 @@
 #define DEBUG_EXAMPLE_ALGORITHM
 using System.Collections.Generic;
-//using System.Linq;
 using KaizerWaldCode.MapGeneration.Data;
 using KaizerWaldCode.Utils;
 using Unity.Burst;
@@ -9,7 +8,6 @@ using Unity.Jobs;
 using Unity.Jobs.LowLevel.Unsafe;
 using Unity.Mathematics;
 using UnityEngine;
-using UnityEngine.UIElements;
 using VisualDebugging;
 
 using Random = Unity.Mathematics.Random;
@@ -17,111 +15,77 @@ using static Unity.Mathematics.math;
 using static KaizerWaldCode.Utils.NativeCollectionUtils;
 using static KaizerWaldCode.Utils.KwManagedContainerUtils;
 using static KaizerWaldCode.Utils.SpatialPartitionUtils;
-using NativeArrayExtensions = Unity.Collections.NativeArrayExtensions;
+using static Unity.Collections.NativeArrayExtensions;
 
 namespace KaizerWaldCode.MapGeneration
 {
     public static class IslandMeshGenerator
     {
-        public static void GetIslandLayers(MapSettings mapSettings, int[] islandIds, int[] verticesCellId, Vector3[] verticesPos)
+        public static void GetIslandDstLayers(in MapSettings mapSettings, int[] islandIds, int[] verticesCellId, Vector3[] verticesPos)
         {
             using NativeArray<int> layers = AllocNtvAry<int>(mapSettings.totalMapPoints);
-            using NativeArray<int> islands = islandIds.ToNativeArray(); //ONLY CELL ID not vertices!
-            using NativeArray<int> vCellId = verticesCellId.ToNativeArray(); //Cell attribution to each vertices
 
-            NativeArray<int> activeLayer;
-            NativeList<int> islandBuffer;
-
-            int[] temp;
-            int numUniqueBufferValue;
-            //FIRST LAYER
+            NativeArray<int> activeLayer; //set of vertices from where we will check around
+            NativeList<int> islandBuffer; //vertices around activeLayer
+            
+            //ISLAND LAYER
             //==========================================================================================================
             using (islandBuffer = new NativeList<int>(mapSettings.totalMapPoints, Allocator.TempJob))
             {
-                FirstLayerIsland(mapSettings.totalMapPoints, layers, vCellId, islands, islandBuffer);
-            
-                activeLayer = AllocNtvAry<int>(islandBuffer.Length,Allocator.Persistent);
+                GetIslandLayer(in mapSettings.totalMapPoints, layers, verticesCellId, islandIds, islandBuffer);
+                activeLayer = AllocNtvAry<int>(islandBuffer.Length);
                 activeLayer.CopyFrom(islandBuffer);
             }
-            
-            //OTHER LAYER
+            //DISTANCE FROM ISLAND LAYERS
             //==========================================================================================================
-            for (int i = 1; i < 10; i++)
+            int layer = 1;
+            while (layers.Contains(-1))
             {
                 using (islandBuffer = new NativeList<int>(mapSettings.totalMapPoints, Allocator.TempJob))
                 {
-                    OthersLayerIsland(mapSettings, layers, activeLayer, islandBuffer).Complete();
-                    //get unique Val
-                    HashSet<int> uniqueValBuffer = new HashSet<int>(islandBuffer.ToArray());
-                    using NativeArray<int> layerToApply = uniqueValBuffer.ToArray().ToNativeArray();
-                    
-                    ApplyLayerIsland(i, layers, layerToApply).Complete();
-
+                    GetDistancesFromIsland(in mapSettings, layers, activeLayer, islandBuffer).Complete();
+                    //also return buffer needed for next iteration -> buffer = next layer to work on(activeLayer)
                     activeLayer.Dispose();
+                    
+                    HashSet<int> uniqueValBuffer = new HashSet<int>(islandBuffer.ToArray()); //get unique Values
+                    using NativeArray<int> layerToApply = uniqueValBuffer.ToNativeArray();
+                    
+                    ApplyLayerIsland(in layer, layers, layerToApply).Complete();
+
                     //buffer reallocate to the activeLayer to be worked
                     activeLayer = AllocNtvAry<int>(layerToApply.Length);
                     activeLayer.CopyFrom(layerToApply);
                 }
+                layer++;
             }
             activeLayer.Dispose();
-            
-            /*
-            //Need to return uniqueValBuffer.ToArray().ToNativeArray()
-            using (islandBuffer = new NativeList<int>(mapSettings.totalMapPoints, Allocator.TempJob))
-            {
-                IslandLayersJob layersJob = new IslandLayersJob(mapSettings, activeLayer, layers, islandBuffer);
-                JobHandle jh = layersJob.ScheduleParallel(activeLayer.Length, JobsUtility.JobWorkerCount - 1, default);
-                jh.Complete();
 
-                uniqueValBuffer = new HashSet<int>(islandBuffer.ToArray());
-                numUniqueBufferValue = uniqueValBuffer.Count;
-                temp = islandBuffer.ToArray();
-            }
-            Debug.Log($"HashSet Size ? : {numUniqueBufferValue}");
-            //APPLY LAYER -> layers
-            //==========================================================================================================
-            using (NativeArray<int> layerToApply =  uniqueValBuffer.ToArray().ToNativeArray() )
-            {
-                ApplyLayerJob applyJob = new ApplyLayerJob(1, layerToApply,layers);
-                JobHandle jh = applyJob.ScheduleParallel(numUniqueBufferValue, JobsUtility.JobWorkerCount - 1, default);
-                jh.Complete();
-                
-            }
-            
-            //DISPOSE
-            //==========================================================================================================
-            */
-            //temp = activeLayer.ToArray();
-            //islandBuffer.Dispose();
-            //if(activeLayer.IsCreated)
-                //activeLayer.Dispose();
-            
 #if DEBUG_EXAMPLE_ALGORITHM
-                VisualDebug.Clear();
-                VisualDebug.Initialize();
-                for (int i = 0; i < verticesPos.Length; i++)
-                {
-                    VisualDebug.BeginFrame("Point Location", true);
-                    VisualDebug.SetColour(Colours.lightRed, Colours.veryDarkGrey);
-                    VisualDebug.DrawPointWithLabel(verticesPos[i], .05f, layers[i].ToString());
-                }
-            
-                VisualDebug.Save();
+            VisualDebug.Clear();
+            VisualDebug.Initialize();
+            for (int i = 0; i < verticesPos.Length; i++)
+            {
+                VisualDebug.BeginFrame("Point Location", true);
+                VisualDebug.SetColour(Colours.lightRed, Colours.veryDarkGrey);
+                VisualDebug.DrawPointWithLabel(verticesPos[i], .05f, layers[i].ToString());
+            }
+        
+            VisualDebug.Save();
 #endif
         }
         
-        private static JobHandle ApplyLayerIsland(int ilayer, NativeArray<int> layers, NativeArray<int> uniqueValBuffer)
+        private static JobHandle ApplyLayerIsland(in int iLayer, NativeArray<int> layers, NativeArray<int> uniqueValBuffer, JobHandle dependency = default)
         {
-            ApplyLayerJob applyJob = new ApplyLayerJob(ilayer, uniqueValBuffer, layers);
-            JobHandle jh = applyJob.ScheduleParallel(uniqueValBuffer.Length, JobsUtility.JobWorkerCount - 1, default);
+            ApplyLayerJob applyJob = new ApplyLayerJob(iLayer, uniqueValBuffer, layers);
+            JobHandle jh = applyJob.ScheduleParallel(uniqueValBuffer.Length, JobsUtility.JobWorkerCount - 1, dependency);
             return jh;
         }
         
-        private static JobHandle OthersLayerIsland(MapSettings mapSettings, NativeArray<int> layers, NativeArray<int> activeLayer, NativeList<int> buffer)
+        private static JobHandle GetDistancesFromIsland(in MapSettings mapSettings, NativeArray<int> layers, NativeArray<int> activeLayer, NativeList<int> buffer, JobHandle dependency = default)
         {
-            IslandLayersJob job = new IslandLayersJob(mapSettings, activeLayer, layers, buffer);
+            DistanceFromIslandJob job = new DistanceFromIslandJob(mapSettings, activeLayer, layers, buffer);
             //Get indices needed to change
-            JobHandle jh = job.ScheduleParallel(activeLayer.Length, JobsUtility.JobWorkerCount - 1, default);
+            JobHandle jh = job.ScheduleParallel(activeLayer.Length, JobsUtility.JobWorkerCount - 1, dependency);
             return jh;
         }
 
@@ -131,48 +95,51 @@ namespace KaizerWaldCode.MapGeneration
         /// <param name="totalMapPoints"></param>
         /// <param name="layers"></param>
         /// <param name="vCellId"></param>
-        /// <param name="islands"></param>
+        /// <param name="islandIds"></param>
         /// <param name="buffer"></param>
-        private static void FirstLayerIsland(int totalMapPoints, NativeArray<int> layers, NativeArray<int> vCellId, NativeArray<int> islands, NativeList<int> buffer)
+        /// <param name="dependency"></param>
+        private static void GetIslandLayer(in int totalMapPoints, NativeArray<int> layers, int[] vCellId, int[] islandIds, NativeList<int> buffer, JobHandle dependency = default)
         {
-            FirstLayerJob layerJob = new FirstLayerJob(layers, vCellId, islands, buffer);
-            JobHandle jh = layerJob.ScheduleParallel(totalMapPoints, JobsUtility.JobWorkerCount - 1, default);
+            using NativeArray<int> ntvCellId = vCellId.ToNativeArray();
+            using NativeArray<int> islands = islandIds.ToNativeArray(); //carefull you can't complete job outside with that!
+            IslandLayerJob layerJob = new IslandLayerJob(layers, ntvCellId, islands, buffer);
+            JobHandle jh = layerJob.ScheduleParallel(totalMapPoints, JobsUtility.JobWorkerCount - 1, dependency);
             jh.Complete();
         }
 
         [BurstCompile(CompileSynchronously = true)]
         private struct ApplyLayerJob : IJobFor
         {
-            [ReadOnly] private int jLayer;
+            [ReadOnly] private int jDistance;
             [ReadOnly] private NativeArray<int> jActiveLayer;
             [NativeDisableParallelForRestriction]
             [WriteOnly] private NativeArray<int> jIslandLayers;
 
-            public ApplyLayerJob(int jLayer, NativeArray<int> jActiveLayer, NativeArray<int> jIslandLayers)
+            public ApplyLayerJob(int distance, NativeArray<int> activeLayer, NativeArray<int> islandLayers)
             {
-                this.jLayer = jLayer;
-                this.jActiveLayer = jActiveLayer;
-                this.jIslandLayers = jIslandLayers;
+                jDistance = distance;
+                jActiveLayer = activeLayer;
+                jIslandLayers = islandLayers;
             }
 
             public void Execute(int index)
             {
                 //Set islands map at activeLayer to layer
-                jIslandLayers[jActiveLayer[index]] = jLayer;
+                jIslandLayers[jActiveLayer[index]] = jDistance;
             }
         }
 
         [BurstCompile(CompileSynchronously = true)]
-        private struct FirstLayerJob : IJobFor
+        private struct IslandLayerJob : IJobFor
         {
-            [ReadOnly]private NativeArray<int> jIslandId;
-            [ReadOnly]private NativeArray<int> jVerticesCellId;
+            [ReadOnly] private NativeArray<int> jIslandId;
+            [ReadOnly] private NativeArray<int> jVerticesCellId;
             [NativeDisableParallelForRestriction]
             [WriteOnly] private NativeArray<int> jIslandLayers;
             [NativeDisableParallelForRestriction]
             [WriteOnly] private NativeList<int>.ParallelWriter jBuffer;
 
-            public FirstLayerJob(NativeArray<int> islandLayer, NativeArray<int> verticesCellId, NativeArray<int> islandId, NativeList<int> buffer)
+            public IslandLayerJob(NativeArray<int> islandLayer, NativeArray<int> verticesCellId, NativeArray<int> islandId, NativeList<int> buffer)
             {
                 jIslandLayers = islandLayer;
                 jVerticesCellId = verticesCellId;
@@ -182,43 +149,42 @@ namespace KaizerWaldCode.MapGeneration
 
             public void Execute(int index)
             {
-                bool found = NativeArrayExtensions.Contains(jIslandId, jVerticesCellId[index]);
-                
+                bool found = jIslandId.Contains(jVerticesCellId[index]);
                 jIslandLayers[index] = select(-1,0,found);
                 jBuffer.AddNoResizeIf(found,index);
             }
         }
 
-        private struct IslandLayersJob : IJobFor
+        private struct DistanceFromIslandJob : IJobFor
         {
             [ReadOnly] private int jPointsPerAxis;
             [ReadOnly] private NativeArray<int> jIslandLayers;
             [ReadOnly] private NativeArray<int> jActiveLayer;
             [NativeDisableParallelForRestriction]
-            [WriteOnly] private NativeList<int>.ParallelWriter jIslandIndiceBuffer;
+            [WriteOnly] private NativeList<int>.ParallelWriter jIslandIndicesBuffer;
 
-            public IslandLayersJob(MapSettings mapSettings, NativeArray<int> activeLayer, NativeArray<int> islandLayers, NativeList<int> islandBuffer)
+            public DistanceFromIslandJob(MapSettings mapSettings, NativeArray<int> activeLayer, NativeArray<int> islandLayers, NativeList<int> islandBuffer)
             {
                 jPointsPerAxis = mapSettings.mapPointPerAxis;
                 jIslandLayers = islandLayers;
-                jIslandIndiceBuffer = islandBuffer.AsParallelWriter();
+                jIslandIndicesBuffer = islandBuffer.AsParallelWriter();
                 jActiveLayer = activeLayer;
             }
             
             public void Execute(int index)
             {
                 int2 coords = KwGrid.GetXY2(jActiveLayer[index], jPointsPerAxis);
-                NativeList<int> neighbors = new NativeList<int>(Allocator.Temp);
-                GetNeighborVertices(coords, ref neighbors);
+                NativeList<int> neighbors = new NativeList<int>(4,Allocator.Temp);
+                GetNeighborVertices(in coords, ref neighbors);
                 
                 if (neighbors.IsEmpty) return;
                 for (int i = 0; i < neighbors.Length; i++)
                 {
-                    jIslandIndiceBuffer.AddNoResize(neighbors[i]);
+                    jIslandIndicesBuffer.AddNoResize(neighbors[i]);
                 }
             }
 
-            private void GetNeighborVertices(int2 coord, ref NativeList<int> neighbors)
+            private void GetNeighborVertices(in int2 coord, ref NativeList<int> neighbors)
             {
                 int leftId = KwGrid.GetLeftIndex(coord, jPointsPerAxis);
                 int rightId = KwGrid.GetRightIndex(coord, jPointsPerAxis);
