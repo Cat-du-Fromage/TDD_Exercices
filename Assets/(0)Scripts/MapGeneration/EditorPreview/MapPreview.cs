@@ -43,10 +43,11 @@ namespace KaizerWaldCode.MapGeneration.EditorPreview
         public bool autoUpdate;
         public bool syncUI;
 
-        public float3[] samplePositions;
-        public int[] islandId;
-        private int[] verticesCellAssignment;
+        private float3[] samplePositions;
+        private int[] islandId;
+        //private int[] verticesCellAssignment;
         //public int[] verticesCellId;
+        //public Vector3[] verticesPos;
 
         private void OnValidate()
         {
@@ -57,6 +58,7 @@ namespace KaizerWaldCode.MapGeneration.EditorPreview
 
         public void DrawMapInEditor()
         {
+            int[] verticesCellAssignment;
             samplePositions = null;
             if (generationType == GenerationType.Noise)
             {
@@ -77,7 +79,6 @@ namespace KaizerWaldCode.MapGeneration.EditorPreview
                 int numCell = 25;
                 SamplesSettings samplesSettings = new SamplesSettings(mapSettings, numCell);
                 
-                //SetPositionToZero();
                 meshFilter.mesh = MeshGenerator.GetTerrainMesh(generalMapSettings, mapSettings, noiseSettings, false);
                 samplePositions = IslandGenerator.GenerateRandomPoints(generalMapSettings, mapSettings, samplesSettings.numCellPerAxis);
                 islandId = IslandGenerator.GetCoastLine(samplePositions, generalMapSettings, mapSettings);
@@ -85,6 +86,7 @@ namespace KaizerWaldCode.MapGeneration.EditorPreview
                 verticesCellAssignment = IslandGenerator.GetCellsClosestVertices(samplesSettings, meshFilter.sharedMesh.vertices.ReinterpretArray<Vector3, float3>(),samplePositions);
                 meshRenderer.sharedMaterial.mainTexture = IslandGenerator.SetTextureOnIsland(mapSettings, verticesCellAssignment, islandId);
                 IslandMeshGenerator.GetIslandDstLayers(mapSettings, islandId, verticesCellAssignment, meshFilter.sharedMesh.vertices);
+                meshFilter.sharedMesh.SetVertices(IslandMeshGenerator.ElevateIsland(in mapSettings, in noiseSettings ,islandId, verticesCellAssignment, meshFilter.sharedMesh.vertices));
             }
         }
 
@@ -125,7 +127,7 @@ namespace KaizerWaldCode.MapGeneration.EditorPreview
                 for (int i = 0; i < samplePositions.Length; i++)
                 {
                     Gizmos.color = islandId.Contains(i) ? Color.green : Color.red;
-                    Gizmos.DrawSphere(samplePositions[i], 0.1f);
+                    Gizmos.DrawWireSphere(samplePositions[i], 0.1f);
                 }
             }
         }

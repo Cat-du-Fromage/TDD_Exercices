@@ -38,7 +38,7 @@ namespace KaizerWaldCode.MapGeneration
             mesh.RecalculateNormals();
             return mesh;
         }
-        
+
         //=====================================================================
         // GET DATA
         //=====================================================================

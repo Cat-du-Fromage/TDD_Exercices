@@ -255,34 +255,27 @@ namespace KaizerWaldCode.Utils
         /// <param name="width">width of the grid</param>
         /// <returns>index of the left point, -1 means point is on corner</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int GetLeftIndex(int2 coords, int width) => select(mad(coords.y, width, coords.x - 1),-1, coords.x == 0);
-        //{
-            //if (coords.x == 0) return -1;
-            //return mad(coords.y, width, coords.x) - 1;
-        //}
+        public static int GetLeftIndex(int2 coords, int width) => select(-1,mad(coords.y, width, coords.x) - 1, coords.x > 0);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int GetRightIndex(int2 coords, int width) => select(-1,mad(coords.y, width, coords.x) + 1, coords.x < width - 1);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int GetBottomIndex(int2 coords, int width) => select(-1,mad(coords.y, width, coords.x) - width, coords.y > 0);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int GetTopIndex(int2 coords, int width) => select(-1,mad(coords.y, width, coords.x) + width, coords.y < width - 1);
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int GetRightIndex(int2 coords, int width)
-        {
-            return select(mad(coords.y, width, coords.x) + 1,-1, coords.x == width - 1);
-            //if (coords.x == width - 1) return -1;
-            //return mad(coords.y, width, coords.x + 1);
-        }
+        public static int GetTopLeftIndex(int2 coords, int width) => select(-1,mad(coords.y, width, coords.x) + width - 1, coords.y < (width - 1) && coords.x > 0);
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int GetBottomIndex(int2 coords, int width)
-        {
-            return select(mad(coords.y, width, coords.x) - width,-1, coords.y == 0);
-            //if (coords.x == width - 1) return -1;
-            //return mad(coords.y, width, coords.x + 1);
-        }
+        public static int GetTopRightIndex(int2 coords, int width) => select(-1,mad(coords.y, width, coords.x) + width + 1, coords.y < width - 1 && coords.x < width - 1);
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int GetTopIndex(int2 coords, int width)
-        {
-            return select(mad(coords.y, width, coords.x) + width,-1, coords.y == width - 1);
-            //if (coords.x == width - 1) return -1;
-            //return mad(coords.y, width, coords.x + 1);
-        }
+        public static int GetBottomLeftIndex(int2 coords, int width) => select(-1,mad(coords.y, width, coords.x ) - width - 1, coords.y > 0 && coords.x > 0);
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int GetBottomRightIndex(int2 coords, int width) => select(-1,mad(coords.y, width, coords.x) - width + 1, coords.y > 0 && coords.x < width - 1);
     }
 }

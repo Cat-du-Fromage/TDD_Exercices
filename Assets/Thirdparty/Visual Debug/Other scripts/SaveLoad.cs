@@ -21,7 +21,7 @@ namespace VisualDebugging.Internal
             SaveData saveData = new SaveData(frames);
             string saveString = JsonUtility.ToJson(saveData);
 
-            StreamWriter writer = new StreamWriter(SavePath, false);
+            using StreamWriter writer = new StreamWriter(SavePath, false);
             writer.Write(saveString);
             writer.Close();
         }
@@ -35,7 +35,7 @@ namespace VisualDebugging.Internal
         {
             HasNewSaveWaiting = false;
 
-            StreamReader reader = new StreamReader(SavePath);
+            using StreamReader reader = new StreamReader(SavePath);
             string saveString = reader.ReadToEnd();
             reader.Close();
 

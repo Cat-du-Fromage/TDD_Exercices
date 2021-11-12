@@ -43,11 +43,46 @@ namespace KaizerWaldCode.MapGeneration
 
             return perlinNoiseMap.ToArray();
         }
+
+        public static void ApplyNoiseOnSurface(GeneralMapSettings generalMapSettings, MapSettings mapSettings, NoiseSettings noiseSettings, JobHandle dependency = default)
+        {
+            //RANDOM OFFSETS
+            //==========================================================================================================
+            using NativeArray<float2> noiseOffsetsMap = AllocNtvAry<float2>(noiseSettings.octaves);
+            
+            OffsetNoiseRandomJob offsetsNoiseJ = new OffsetNoiseRandomJob(generalMapSettings.seed, noiseSettings.offset, noiseOffsetsMap);
+            JobHandle offsetsJH = offsetsNoiseJ.ScheduleParallel(noiseSettings.octaves,JobsUtility.JobWorkerCount - 1, dependency);
+            
+            //PERLIN NOISE
+            //==========================================================================================================
+            using NativeArray<float> perlinNoiseMap = AllocNtvAry<float>(mapSettings.totalMapPoints);
+            
+            PerlinNoiseJob perlinNoiseJ = new PerlinNoiseJob(mapSettings.mapPointPerAxis, noiseSettings, noiseOffsetsMap, perlinNoiseMap);
+            JobHandle perlinNoiseJH = perlinNoiseJ.ScheduleParallel(mapSettings.totalMapPoints,JobsUtility.JobWorkerCount - 1, offsetsJH);
+            perlinNoiseJH.Complete();
+            
+            
+        }
         
 //======================================================================================================================
 // JOB SYSTEM
 //======================================================================================================================
         
+        // RANDOM OFFSETS
+        //==============================================================================================================
+        [BurstCompile(CompileSynchronously = true)]
+        private struct ApplyNoiseJob : IJobFor
+        {
+            [ReadOnly] private NativeArray<int> jNoiseMap;
+            [NativeDisableParallelForRestriction] 
+            private NativeArray<float3> jVertices;
+            
+            public void Execute(int index)
+            {
+                jVertices[index] = float3(jVertices[index].x, jNoiseMap[index], jVertices[index].z);
+            }
+        }
+
         // RANDOM OFFSETS
         //==============================================================================================================
         [BurstCompile(CompileSynchronously = true)]
@@ -115,7 +150,7 @@ namespace KaizerWaldCode.MapGeneration
                 //Not needed in parallel! it's a layering of noise so it must be done contigiously
                 for (int i = 0; i < JOctaves; i++)
                 {
-                    GetSimplexNoise(in i, in x, in z, in halfMapSize, in frequency, out float pNoiseValue);
+                    GetSimplexNoise(i, x, z, halfMapSize, frequency, out float pNoiseValue);
                     
                     noiseHeight = mad(pNoiseValue, amplitude, noiseHeight);
                     amplitude = mul(amplitude, JPersistence);
@@ -126,7 +161,7 @@ namespace KaizerWaldCode.MapGeneration
                 JNoiseMap[index] = noiseHeight;
             }
 
-            private void GetSimplexNoise(in int i, in int x, in int z, in float halfMapSize, in float frequency, out float pNoiseValue)
+            private void GetSimplexNoise(int i, int x, int z, float halfMapSize, float frequency, out float pNoiseValue)
             {
                 float sampleX = mul((x - halfMapSize + JOctOffsetArray[i].x) / JScale, frequency);
                 float sampleY = mul((z - halfMapSize + JOctOffsetArray[i].y) / JScale, frequency);
